@@ -804,10 +804,31 @@
        RESPONSIVE
        ============================================ */
     @media (max-width: 768px) {
-      .section { padding: 60px 20px; }
+      .section { padding: 60px 16px; }
+      .hero { padding: 32px 16px; min-height: auto; padding-top: 60px; padding-bottom: 60px; }
+      .hero h1 { font-size: 32px; }
+      .hero-sub { font-size: 15px; }
+      .hero-cta-row { flex-direction: column; }
+      .btn-primary, .btn-secondary { width: 100%; justify-content: center; padding: 14px 24px; }
       .pricing-card.popular { transform: scale(1); }
-      .comparison-table { font-size: 12px; }
-      .comparison-table th, .comparison-table td { padding: 10px 8px; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .pain-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr; gap: 24px; }
+      .testimonial-grid { grid-template-columns: 1fr; }
+      .comparison-table { font-size: 11px; }
+      .comparison-table th, .comparison-table td { padding: 8px 6px; }
+      .social-proof { flex-direction: column; gap: 8px; }
+      .final-cta h2 { font-size: 28px; }
+      .section-title { font-size: 26px; }
+    }
+
+    @media (max-width: 480px) {
+      .hero h1 { font-size: 28px; }
+      .pricing-price { font-size: 36px; }
+      .section { padding: 48px 12px; }
+      .comparison-table { display: none; } /* Hide complex table on tiny screens */
+      .pain-card, .feature-card, .pricing-card { padding: 20px; }
     }
   </style>
 </head>

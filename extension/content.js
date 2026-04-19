@@ -28,16 +28,85 @@
     return video ? Math.floor(video.duration) : 0;
   }
 
-  // ── Get transcript from YouTube ──
-  async function getTranscript(videoId) {
+  // ── Extract transcript directly from YouTube page ──
+  async function extractTranscript() {
     try {
-      // Try YouTube's built-in transcript
-      const response = await fetch(`${API_BASE}/transcript?videoId=${videoId}`);
-      if (response.ok) return await response.json();
-    } catch (e) {
-      console.log('[VideoLens] Transcript API failed, using fallback');
+      // Method 1: Click the transcript button and read it
+      const transcriptBtn = document.querySelector('button[aria-label="Show transcript"]');
+      if (transcriptBtn) {
+        transcriptBtn.click();
+        await sleep(1500);
+
+        const segments = [];
+        const transcriptSegments = document.querySelectorAll('ytd-transcript-segment-renderer');
+        transcriptSegments.forEach(seg => {
+          const timeEl = seg.querySelector('.segment-timestamp');
+          const textEl = seg.querySelector('.segment-text');
+          if (timeEl && textEl) {
+            const timeStr = timeEl.textContent.trim();
+            const text = textEl.textContent.trim();
+            const seconds = parseTimeString(timeStr);
+            segments.push({ start: seconds, duration: 5, end: seconds + 5, text });
+          }
+        });
+
+        // Close transcript panel
+        const closeBtn = document.querySelector('button[aria-label="Close transcript"]');
+        if (closeBtn) closeBtn.click();
+
+        if (segments.length) return { source: 'extension', language: 'auto', segments };
+      }
+
+      // Method 2: Get caption tracks from ytInitialPlayerResponse
+      const playerResponse = window.ytInitialPlayerResponse ||
+        (document.querySelector('script:not([src])')?.textContent?.match(/ytInitialPlayerResponse\s*=\s*({.*?});/)?.[1] && JSON.parse(RegExp.$1));
+
+      if (playerResponse?.captions?.captionTracks) {
+        const tracks = playerResponse.captions.captionTracks;
+        const track = tracks.find(t => t.languageCode === 'en') || tracks[0];
+        if (track?.baseUrl) {
+          const resp = await fetch(track.baseUrl);
+          const xml = await resp.text();
+          const segments = parseCaptionXmlLocal(xml);
+          if (segments.length) return { source: 'extension-captions', language: track.languageCode, segments };
+        }
+      }
+
+    } catch (err) {
+      console.log('[VideoLens] Extension transcript extraction failed:', err.message);
     }
     return null;
+  }
+
+  function parseCaptionXmlLocal(xml) {
+    const segments = [];
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, 'text/xml');
+    const texts = doc.querySelectorAll('text');
+    texts.forEach(el => {
+      const start = parseFloat(el.getAttribute('start') || 0);
+      const duration = parseFloat(el.getAttribute('dur') || 5);
+      segments.push({
+        start,
+        duration,
+        end: start + duration,
+        text: el.textContent?.trim() || ''
+      });
+    });
+    return segments;
+  }
+
+  function parseTimeString(str) {
+    const parts = str.split(':').reverse();
+    let seconds = 0;
+    if (parts[0]) seconds += parseInt(parts[0]) || 0;
+    if (parts[1]) seconds += (parseInt(parts[1]) || 0) * 60;
+    if (parts[2]) seconds += (parseInt(parts[2]) || 0) * 3600;
+    return seconds;
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   // ── Inject the Summarize button ──
@@ -147,6 +216,9 @@
         return;
       }
 
+      // Extract transcript from the page first
+      const transcript = await extractTranscript();
+
       // Call summary API
       const response = await fetch(`${API_BASE}/summarize`, {
         method: 'POST',
@@ -155,6 +227,7 @@
           videoId,
           videoUrl: window.location.href,
           title: getVideoTitle(),
+          transcript: transcript, // Send extracted transcript to API
           options: {
             includeKeywords: true,
             includeStoryline: true,
