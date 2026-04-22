@@ -2,7 +2,10 @@
    VideoLens — API Server
    Express + OpenRouter (Free Models) + Transcript
    ============================================ */
-
+require('dotenv').config();
+console.log('--- DEBUGGING ENV ---');
+console.log('OPENROUTER_API_KEY exists?', !!process.env.OPENROUTER_API_KEY);
+console.log('Full process.env keys:', Object.keys(process.env));
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
@@ -15,7 +18,7 @@ app.use(express.json());
 const limiter = rateLimit({
   windowMs: 60 * 1000,
   max: 30,
-  message: { error: 'Too many requests. Slow down.' }
+  message: { error: 'Too many requests. Slow down.' },
 });
 app.use(limiter);
 
@@ -30,11 +33,11 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 // Free models on OpenRouter (as of 2026)
 const FREE_MODELS = {
   // Best free models for summarization
-  primary: 'google/gemini-2.0-flash-exp:free',        // Fast, good quality, free
+  primary: 'google/gemini-2.0-flash-exp:free', // Fast, good quality, free
   fallback: 'meta-llama/llama-3.1-70b-instruct:free', // Good backup
-  qna: 'google/gemini-2.0-flash-exp:free',            // Q&A tasks
+  qna: 'google/gemini-2.0-flash-exp:free', // Q&A tasks
   // Paid fallback if free limits hit
-  paid: 'openai/gpt-4o-mini',                          // Cheap, high quality
+  paid: 'openai/gpt-4o-mini', // Cheap, high quality
 };
 
 const OPENROUTER_BASE = 'https://openrouter.ai/api/v1';
@@ -53,7 +56,7 @@ app.get('/health', (req, res) => {
     service: 'VideoLens API',
     version: '1.1.0',
     provider: LLM_PROVIDER,
-    freeModels: Object.keys(FREE_MODELS)
+    freeModels: Object.keys(FREE_MODELS),
   });
 });
 
@@ -71,7 +74,9 @@ app.get('/transcript', async (req, res) => {
     let transcript = await fetchYouTubeTranscript(videoId);
 
     if (!transcript || !transcript.segments?.length) {
-      console.log(`[VideoLens] No captions for ${videoId}, would use Whisper fallback`);
+      console.log(
+        `[VideoLens] No captions for ${videoId}, would use Whisper fallback`
+      );
       transcript = await whisperFallback(videoId);
     }
 
@@ -90,14 +95,20 @@ app.get('/transcript', async (req, res) => {
 // ── Summarize video ──
 app.post('/summarize', async (req, res) => {
   try {
-    const { videoId, videoUrl, title, transcript: clientTranscript, options = {} } = req.body;
+    const {
+      videoId,
+      videoUrl,
+      title,
+      transcript: clientTranscript,
+      options = {},
+    } = req.body;
     if (!videoId) return res.status(400).json({ error: 'videoId required' });
 
     const {
       includeKeywords = true,
       includeStoryline = true,
       includeTimestamps = true,
-      language = 'en'
+      language = 'en',
     } = options;
 
     // Use transcript from extension if provided, otherwise try server-side
@@ -121,7 +132,7 @@ app.post('/summarize', async (req, res) => {
       return res.status(404).json({ error: 'Could not extract transcript' });
     }
 
-    const fullText = transcript.segments.map(s => s.text).join(' ');
+    const fullText = transcript.segments.map((s) => s.text).join(' ');
 
     const summaryResult = await generateSummary(fullText, {
       title: title || 'YouTube Video',
@@ -129,7 +140,7 @@ app.post('/summarize', async (req, res) => {
       includeStoryline,
       includeTimestamps,
       language,
-      segments: transcript.segments
+      segments: transcript.segments,
     });
 
     res.json({
@@ -137,9 +148,8 @@ app.post('/summarize', async (req, res) => {
       videoUrl,
       title,
       source,
-      ...summaryResult
+      ...summaryResult,
     });
-
   } catch (err) {
     console.error('[VideoLens] Summarize error:', err.message);
     res.status(500).json({ error: 'Failed to summarize video' });
@@ -163,7 +173,9 @@ app.post('/ask', async (req, res) => {
       return res.status(404).json({ error: 'Could not get transcript' });
     }
 
-    const fullText = transcript.segments.map(s => `[${formatTime(s.start)}] ${s.text}`).join('\n');
+    const fullText = transcript.segments
+      .map((s) => `[${formatTime(s.start)}] ${s.text}`)
+      .join('\n');
     const answer = await answerQuestion(fullText, question);
     res.json(answer);
   } catch (err) {
@@ -171,7 +183,6 @@ app.post('/ask', async (req, res) => {
     res.status(500).json({ error: 'Failed to answer question' });
   }
 });
-
 
 // ============================================
 // LLM CALLS (OpenRouter or OpenAI)
@@ -183,18 +194,30 @@ async function callLLM(messages, options = {}) {
     fallbackModel = FREE_MODELS.fallback,
     temperature = 0.3,
     maxTokens = 4000,
-    jsonResponse = true
+    jsonResponse = true,
   } = options;
 
   if (LLM_PROVIDER === 'openrouter') {
-    return callOpenRouter(messages, { model, fallbackModel, temperature, maxTokens, jsonResponse });
+    return callOpenRouter(messages, {
+      model,
+      fallbackModel,
+      temperature,
+      maxTokens,
+      jsonResponse,
+    });
   } else {
-    return callOpenAI(messages, { model, temperature, maxTokens, jsonResponse });
+    return callOpenAI(messages, {
+      model,
+      temperature,
+      maxTokens,
+      jsonResponse,
+    });
   }
 }
 
 async function callOpenRouter(messages, options) {
-  const { model, fallbackModel, temperature, maxTokens, jsonResponse } = options;
+  const { model, fallbackModel, temperature, maxTokens, jsonResponse } =
+    options;
   const apiKey = OPENROUTER_API_KEY;
 
   if (!apiKey) throw new Error('OPENROUTER_API_KEY not set');
@@ -215,28 +238,30 @@ async function callOpenRouter(messages, options) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'HTTP-Referer': 'https://videolens.ai',
-        'X-Title': 'VideoLens'
+        'X-Title': 'VideoLens',
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
     });
 
     const data = await response.json();
 
     // If free model rate limited, try fallback
     if (data.error?.message?.includes('rate') || data.error?.code === 429) {
-      console.log(`[VideoLens] Rate limited on ${model}, trying ${fallbackModel}`);
+      console.log(
+        `[VideoLens] Rate limited on ${model}, trying ${fallbackModel}`
+      );
       body.model = fallbackModel;
       const retry = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
           'HTTP-Referer': 'https://videolens.ai',
-          'X-Title': 'VideoLens'
+          'X-Title': 'VideoLens',
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
       });
       return await retry.json();
     }
@@ -269,14 +294,13 @@ async function callOpenAI(messages, options) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+      Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
   });
 
   return response.json();
 }
-
 
 // ============================================
 // CORE FUNCTIONS
@@ -287,9 +311,10 @@ async function fetchYouTubeTranscript(videoId) {
     const url = `https://www.youtube.com/watch?v=${videoId}`;
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept-Language': 'en-US,en;q=0.9'
-      }
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
     });
 
     const html = await response.text();
@@ -299,31 +324,44 @@ async function fetchYouTubeTranscript(videoId) {
     const captions = JSON.parse(captionMatch[1]);
     if (!captions || !captions.length) return null;
 
-    const track = captions.find(c => c.languageCode === 'en') || captions[0];
+    const track = captions.find((c) => c.languageCode === 'en') || captions[0];
     const captionResponse = await fetch(track.baseUrl);
     const captionXml = await captionResponse.text();
     const segments = parseCaptionXml(captionXml);
 
     return { source: 'captions', language: track.languageCode, segments };
   } catch (err) {
-    console.log(`[VideoLens] YouTube transcript failed for ${videoId}:`, err.message);
+    console.log(
+      `[VideoLens] YouTube transcript failed for ${videoId}:`,
+      err.message
+    );
     return null;
   }
 }
 
 function parseCaptionXml(xml) {
   const segments = [];
-  const textRegex = /<text\s+start="([\d.]+)"\s+duration="([\d.]+)"[^>]*>(.*?)<\/text>/g;
+  const textRegex =
+    /<text\s+start="([\d.]+)"\s+duration="([\d.]+)"[^>]*>(.*?)<\/text>/g;
   let match;
 
   while ((match = textRegex.exec(xml)) !== null) {
     const start = parseFloat(match[1]);
     const duration = parseFloat(match[2]);
     let text = match[3]
-      .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-      .replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/\n/g, ' ');
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&#39;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/\n/g, ' ');
 
-    segments.push({ start, duration, end: start + duration, text: text.trim() });
+    segments.push({
+      start,
+      duration,
+      end: start + duration,
+      text: text.trim(),
+    });
   }
   return segments;
 }
@@ -335,9 +373,16 @@ async function whisperFallback(videoId) {
 }
 
 async function generateSummary(text, options) {
-  const { title, includeKeywords, includeStoryline, includeTimestamps, language } = options;
+  const {
+    title,
+    includeKeywords,
+    includeStoryline,
+    includeTimestamps,
+    language,
+  } = options;
   const maxChars = 80000;
-  const truncatedText = text.length > maxChars ? text.substring(0, maxChars) + '...' : text;
+  const truncatedText =
+    text.length > maxChars ? text.substring(0, maxChars) + '...' : text;
 
   const systemPrompt = `You are VideoLens, an expert video content analyzer. Respond in valid JSON only.
 
@@ -361,17 +406,25 @@ Required JSON structure:
   userPrompt += `Title: "${title}"\n\nTranscript:\n${truncatedText}`;
 
   try {
-    const data = await callLLM([
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
-    ], { temperature: 0.3, maxTokens: 4000, jsonResponse: true });
+    const data = await callLLM(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      { temperature: 0.3, maxTokens: 4000, jsonResponse: true }
+    );
 
     const content = data.choices?.[0]?.message?.content;
     if (!content) throw new Error('No LLM response');
     return JSON.parse(content);
   } catch (err) {
     console.error('[VideoLens] Summary generation error:', err.message);
-    return { summary: 'Summary generation failed. Please try again.', keywords: [], storyline: [], timestamps: [] };
+    return {
+      summary: 'Summary generation failed. Please try again.',
+      keywords: [],
+      storyline: [],
+      timestamps: [],
+    };
   }
 }
 
@@ -387,15 +440,29 @@ Respond in JSON:
 }`;
 
   try {
-    const data = await callLLM([
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: `Transcript (with timestamps):\n${transcriptText}\n\nQuestion: ${question}` }
-    ], { model: FREE_MODELS.qna, temperature: 0.2, maxTokens: 1000, jsonResponse: true });
+    const data = await callLLM(
+      [
+        { role: 'system', content: systemPrompt },
+        {
+          role: 'user',
+          content: `Transcript (with timestamps):\n${transcriptText}\n\nQuestion: ${question}`,
+        },
+      ],
+      {
+        model: FREE_MODELS.qna,
+        temperature: 0.2,
+        maxTokens: 1000,
+        jsonResponse: true,
+      }
+    );
 
     const content = data.choices?.[0]?.message?.content;
     return JSON.parse(content);
   } catch (err) {
-    return { answer: 'Failed to find an answer. Try rephrasing.', confidence: 'low' };
+    return {
+      answer: 'Failed to find an answer. Try rephrasing.',
+      confidence: 'low',
+    };
   }
 }
 
