@@ -1,10 +1,12 @@
 /**
- * AIHighlight.js — Claude AI-powered highlight detection
- * Analyzes YouTube transcript/metadata to find 10 best moments
+ * AIHighlight.js — DeepSeek-powered highlight detection
+ * Uses opencode-go (DeepSeek V4 Flash) via OpenAI-compatible API
+ * No Anthropic dependency, no extra cost
  */
 const axios = require('axios');
 
-const ANTHROPIC_KEY = () => process.env.ANTHROPIC_API_KEY || '';
+const OPENCODE_BASE = process.env.OPENCODE_BASE || 'https://opencode.ai/zen/go/v1';
+const OPENCODE_KEY = process.env.OPENCODE_KEY || process.env.VIOSTUDIO_KEY || '';
 
 const HIGHLIGHT_PROMPT = `You are an expert viral video editor specializing in short-form content for TikTok and YouTube Shorts. Your job is to find the 10 best moments from a video to clip.
 
@@ -46,39 +48,54 @@ ${transcript ? `\nTranscript (excerpt):\n${transcript.slice(0, 3000)}` : ''}
 
 Find the 10 best moments to clip.`;
 
-  const response = await axios.post(
-    'https://api.anthropic.com/v1/messages',
-    {
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
-      system: HIGHLIGHT_PROMPT,
-      messages: [{ role: 'user', content: userContent }],
-    },
-    {
-      headers: {
-        'x-api-key': ANTHROPIC_KEY(),
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
+  const apiKey = OPENCODE_KEY;
+  if (!apiKey) {
+    console.warn('[AIHighlight] No API key set, using fallback');
+    return fallbackHighlights(duration);
+  }
+
+  try {
+    const response = await axios.post(
+      `${OPENCODE_BASE}/chat/completions`,
+      {
+        model: 'deepseek-v4-flash',
+        messages: [
+          { role: 'system', content: HIGHLIGHT_PROMPT },
+          { role: 'user', content: userContent }
+        ],
+        max_tokens: 2000,
+        temperature: 0.3,
       },
-      timeout: 30000,
-    }
-  );
+      {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      }
+    );
 
-  const text = response.data.content[0].text.trim();
-  // Strip any accidental markdown
-  const clean = text.replace(/```json|```/g, '').trim();
-  const highlights = JSON.parse(clean);
+    const text = response.data.choices?.[0]?.message?.content;
+    if (!text) throw new Error('No response from AI');
 
-  // Validate and clamp
-  return highlights.slice(0, 10).map((h, i) => ({
-    rank: i + 1,
-    start_sec: Math.max(0, parseFloat(h.start_sec) || 0),
-    end_sec: Math.min(duration, parseFloat(h.end_sec) || 30),
-    title: h.title || `Momen #${i + 1}`,
-    reason: h.reason || '',
-    score: Math.min(10, Math.max(0, parseFloat(h.score) || 7)),
-    hook: h.hook || '',
-  }));
+    // Parse JSON from response (strip markdown if present)
+    const clean = text.replace(/```json|```/g, '').trim();
+    const highlights = JSON.parse(clean);
+
+    // Validate and clamp
+    return highlights.slice(0, 10).map((h, i) => ({
+      rank: i + 1,
+      start_sec: Math.max(0, parseFloat(h.start_sec) || 0),
+      end_sec: Math.min(duration, parseFloat(h.end_sec) || 30),
+      title: h.title || `Momen #${i + 1}`,
+      reason: h.reason || '',
+      score: Math.min(10, Math.max(0, parseFloat(h.score) || 7)),
+      hook: h.hook || '',
+    }));
+  } catch (err) {
+    console.error('[AIHighlight] Detection error:', err.message);
+    return fallbackHighlights(duration);
+  }
 }
 
 // Fallback: evenly spaced clips if AI fails

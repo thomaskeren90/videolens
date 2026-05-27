@@ -1,6 +1,6 @@
 /**
- * Video Summarizer — Express Server
- * Paste YouTube link → AI detects 10 best moments → cut/crop/caption → TikTok-ready
+ * Video Summarizer — Express Server v2
+ * DeepSeek + FFmpeg clipper. JSON file storage. No SQLite.
  */
 require('dotenv').config();
 const express = require('express');
@@ -9,22 +9,28 @@ const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
-const { requireAuth, optionalAuth, register, login, checkAndDecrementQuota } = require('./lib/Auth');
-const { createPayment, handleWebhook } = require('./lib/Midtrans');
+const { requireAuth, optionalAuth, register, login, checkAndDecrementQuota, addCredits, loadUsers, saveUsers, PLAN_LIMITS } = require('./lib/Auth');
+const { createSnapToken, verifyWebhookSignature, isPaymentSuccess, CREDIT_PACKAGES, getPackage } = require('./lib/Midtrans');
 const { getVideoInfo, downloadVideo, processClip, cleanupTmp, getClipPath, clipExists } = require('./lib/Clipper');
 const { detectHighlights, fallbackHighlights } = require('./lib/AIHighlight');
-const { getDb } = require('./lib/DB');
 
 const app = express();
 const PORT = process.env.PORT || 3030;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 const CLIPS_DIR = process.env.CLIPS_DIR || path.join(__dirname, 'clips');
+const TMP_DIR = process.env.TMP_DIR || path.join(__dirname, 'tmp');
+
+// Ensure dirs exist
+[CLIPS_DIR, TMP_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
+
+// ─── In-memory job store (lost on restart, fine for MVP) ────────────────────
+const jobs = new Map();
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
 app.use(cors({ origin: '*', credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/clips', express.static(CLIPS_DIR)); // serve generated clips
+app.use('/clips', express.static(CLIPS_DIR));
 
 const wrap = fn => async (req, res) => {
   try { await fn(req, res); }
@@ -51,187 +57,213 @@ app.post('/api/auth/login', wrap(async (req, res) => {
 }));
 
 app.get('/api/auth/me', requireAuth, wrap(async (req, res) => {
-  const db = getDb();
-  const user = db.prepare('SELECT id, email, name, plan, clips_today, clips_reset FROM users WHERE id = ?').get(req.user.id);
+  const users = loadUsers();
+  const user = Object.values(users).find(u => u.id === req.user.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
-  const FREE_LIMIT = parseInt(process.env.FREE_CLIPS_PER_DAY || '5');
-  const today = new Date().toISOString().slice(0, 10);
-  const clipsToday = user.clips_reset === today ? user.clips_today : 0;
-  res.json({ ...user, clips_today: clipsToday, clips_remaining: user.plan === 'free' ? Math.max(0, FREE_LIMIT - clipsToday) : 999 });
+
+  const limit = user.plan === 'free' ? PLAN_LIMITS.free : PLAN_LIMITS[user.plan] || 999;
+  res.json({
+    id: user.id, email: user.email, name: user.name, plan: user.plan,
+    clips_used: user.clips_used || 0,
+    clips_remaining: Math.max(0, limit - (user.clips_used || 0)),
+    total_processed: user.total_processed || 0,
+  });
 }));
 
 // ─── ANALYZE: extract highlights ─────────────────────────────────────────────
 app.post('/api/analyze', optionalAuth, wrap(async (req, res) => {
   const { url } = req.body;
-  if (!url || !url.includes('youtu')) return res.status(400).json({ error: 'URL YouTube tidak valid' });
+  if (!url || !url.includes('youtu')) return res.status(400).json({ error: 'Invalid YouTube URL' });
 
-  const db = getDb();
-  const userId = req.user?.id || 'anonymous';
   const jobId = uuidv4();
+  const job = {
+    id: jobId, youtube_url: url, user_id: req.user?.id || 'anonymous',
+    status: 'analyzing', highlights: null, clips: [], error: null,
+    video_title: '', video_thumb: '', video_duration: 0,
+    created_at: new Date().toISOString(),
+  };
+  jobs.set(jobId, job);
 
-  // Create job
-  db.prepare(`
-    INSERT INTO jobs (id, user_id, youtube_url, status) VALUES (?, ?, ?, 'analyzing')
-  `).run(jobId, userId, url);
-
+  // Return immediately, process async
   res.json({ jobId, status: 'analyzing' });
 
-  // Process async
-  (async () => {
-    try {
-      // 1. Get video metadata
-      const info = await getVideoInfo(url);
-      db.prepare('UPDATE jobs SET video_title=?, video_thumb=?, video_duration=?, updated_at=datetime("now") WHERE id=?')
-        .run(info.title, info.thumbnail, info.duration, jobId);
-
-      // 2. AI highlight detection
-      let highlights;
-      try {
-        highlights = await detectHighlights(info);
-      } catch (e) {
-        console.warn('[VS] AI highlight failed, using fallback:', e.message);
-        highlights = fallbackHighlights(info.duration);
-      }
-
-      // 3. Store highlights + create clip records
-      const clipInsert = db.prepare(`
-        INSERT INTO clips (id, job_id, user_id, title, start_sec, end_sec, score, reason, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ready')
-      `);
-
-      const insertMany = db.transaction((clips) => {
-        for (const h of clips) clipInsert.run(uuidv4(), jobId, userId, h.title, h.start_sec, h.end_sec, h.score, h.reason);
-      });
-      insertMany(highlights);
-
-      db.prepare("UPDATE jobs SET status='done', highlights=?, updated_at=datetime('now') WHERE id=?")
-        .run(JSON.stringify(highlights), jobId);
-
-    } catch (err) {
-      console.error('[VS] Analyze error:', err.message);
-      db.prepare("UPDATE jobs SET status='error', error=?, updated_at=datetime('now') WHERE id=?")
-        .run(err.message, jobId);
-    }
-  })();
+  processAsync(job);
 }));
+
+async function processAsync(job) {
+  try {
+    // 1. Get video metadata + transcript
+    const info = await getVideoInfo(job.youtube_url);
+    job.video_title = info.title;
+    job.video_thumb = info.thumbnail;
+    job.video_duration = info.duration;
+
+    // 2. AI detects highlights
+    let highlights;
+    try {
+      highlights = await detectHighlights(info);
+    } catch (e) {
+      console.warn('[VS] AI failed, using fallback:', e.message);
+      highlights = fallbackHighlights(info.duration);
+    }
+
+    // 3. Create clip records
+    job.highlights = highlights;
+    job.clips = highlights.map((h, i) => ({
+      id: uuidv4(), job_id: job.id, title: h.title,
+      start_sec: h.start_sec, end_sec: h.end_sec,
+      score: h.score, reason: h.reason, hook: h.hook,
+      status: 'pending',
+    }));
+    job.status = 'done';
+  } catch (err) {
+    console.error('[VS] Analyze error:', err.message);
+    job.status = 'error';
+    job.error = err.message;
+  }
+}
 
 // ─── JOB STATUS ──────────────────────────────────────────────────────────────
-app.get('/api/job/:jobId', optionalAuth, wrap(async (req, res) => {
-  const db = getDb();
-  const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(req.params.jobId);
+app.get('/api/job/:jobId', (req, res) => {
+  const job = jobs.get(req.params.jobId);
   if (!job) return res.status(404).json({ error: 'Job not found' });
+  res.json(job);
+});
 
-  const clips = db.prepare('SELECT * FROM clips WHERE job_id = ? ORDER BY score DESC').all(job.id);
-  res.json({
-    ...job,
-    highlights: job.highlights ? JSON.parse(job.highlights) : null,
-    clips: clips.map(c => ({
-      ...c,
-      download_url: c.file_path ? `${BASE_URL}/clips/${path.basename(c.file_path)}` : null,
-    })),
-  });
-}));
-
-// ─── CLIP: cut + crop + caption ───────────────────────────────────────────────
+// ─── PROCESS CLIP (requires auth, decrements quota) ─────────────────────────
 app.post('/api/clip', requireAuth, wrap(async (req, res) => {
   const { jobId, clipId, caption, cropMode = 'center', addCaptions = true } = req.body;
   if (!jobId || !clipId) return res.status(400).json({ error: 'jobId dan clipId wajib' });
 
-  const db = getDb();
-  const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(jobId);
+  const job = jobs.get(jobId);
   if (!job) return res.status(404).json({ error: 'Job not found' });
 
-  const clip = db.prepare('SELECT * FROM clips WHERE id = ? AND job_id = ?').get(clipId, jobId);
+  const clip = job.clips.find(c => c.id === clipId);
   if (!clip) return res.status(404).json({ error: 'Clip not found' });
 
   // Check quota
   checkAndDecrementQuota(req.user.id);
 
-  db.prepare("UPDATE clips SET status='processing' WHERE id=?").run(clipId);
+  clip.status = 'processing';
   res.json({ clipId, status: 'processing' });
 
   // Process async
   (async () => {
-    let sourcePath;
     try {
-      // Download video if not cached
-      const videoId = job.id;
-      const cachedPath = path.join(process.env.TMP_DIR || './tmp', `${videoId}.mp4`);
+      // Download video
+      const sourcePath = await downloadVideo(job.youtube_url, job.id);
+      clip.status = 'processing';
 
-      if (!fs.existsSync(cachedPath)) {
-        db.prepare("UPDATE clips SET status='downloading' WHERE id=?").run(clipId);
-        sourcePath = await downloadVideo(job.youtube_url, videoId);
-      } else {
-        sourcePath = cachedPath;
-      }
-
-      // Process clip
-      db.prepare("UPDATE clips SET status='processing' WHERE id=?").run(clipId);
+      // Cut + crop + caption
       const result = await processClip({
-        sourcePath,
-        startSec: clip.start_sec,
-        endSec: clip.end_sec,
-        clipId,
-        caption: caption || clip.title,
-        cropMode,
-        addCaptions,
+        sourcePath, startSec: clip.start_sec, endSec: clip.end_sec,
+        clipId, caption: caption || clip.title || clip.hook,
+        cropMode, addCaptions,
       });
 
-      db.prepare("UPDATE clips SET status='done', file_path=?, file_size=? WHERE id=?")
-        .run(result.path, result.size, clipId);
+      clip.status = 'done';
+      clip.file_path = result.path;
+      clip.file_size = result.size;
+      clip.download_url = `${BASE_URL}/clips/${clipId}.mp4`;
 
+      // Update user total
+      const users = loadUsers();
+      const user = Object.values(users).find(u => u.id === req.user.id);
+      if (user) { user.total_processed = (user.total_processed || 0) + 1; saveUsers(users); }
     } catch (err) {
       console.error('[VS] Clip error:', err.message);
-      db.prepare("UPDATE clips SET status='error', reason=? WHERE id=?").run(err.message, clipId);
+      clip.status = 'error';
+      clip.error = err.message;
+    } finally {
+      cleanupTmp(job.id);
     }
   })();
 }));
 
-// ─── CLIP STATUS ──────────────────────────────────────────────────────────────
-app.get('/api/clip/:clipId', requireAuth, wrap(async (req, res) => {
-  const db = getDb();
-  const clip = db.prepare('SELECT * FROM clips WHERE id = ?').get(req.params.clipId);
-  if (!clip) return res.status(404).json({ error: 'Clip not found' });
+// ─── CLIP STATUS ─────────────────────────────────────────────────────────────
+app.get('/api/clip/:clipId', (req, res) => {
+  for (const job of jobs.values()) {
+    const clip = job.clips.find(c => c.id === req.params.clipId);
+    if (clip) return res.json(clip);
+  }
+  res.status(404).json({ error: 'Clip not found' });
+});
 
-  res.json({
-    ...clip,
-    download_url: clip.file_path ? `${BASE_URL}/clips/${path.basename(clip.file_path)}` : null,
-  });
-}));
+// ─── DOWNLOAD ────────────────────────────────────────────────────────────────
+app.get('/api/download/:clipId', requireAuth, (req, res) => {
+  const filePath = getClipPath(req.params.clipId);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Clip not found' });
+  res.download(filePath);
+});
 
-// ─── CLIP DOWNLOAD ────────────────────────────────────────────────────────────
-app.get('/api/download/:clipId', requireAuth, wrap(async (req, res) => {
-  const db = getDb();
-  const clip = db.prepare('SELECT * FROM clips WHERE id = ? AND user_id = ?').get(req.params.clipId, req.user.id);
-  if (!clip || !clip.file_path) return res.status(404).json({ error: 'Clip not found or not ready' });
-
-  const filename = `videosummarizer_${clip.title?.replace(/[^a-z0-9]/gi, '_') || clip.id}.mp4`;
-  res.download(clip.file_path, filename);
-}));
-
-// ─── PAYMENT ──────────────────────────────────────────────────────────────────
+// ─── PAYMENT ─────────────────────────────────────────────────────────────────
 app.post('/api/payment/create', requireAuth, wrap(async (req, res) => {
-  const { plan } = req.body;
-  const db = getDb();
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
-  const result = await createPayment(req.user.id, plan, user.email, user.name);
-  res.json(result);
+  const { packageId } = req.body;
+  const pkg = getPackage(packageId);
+  if (!pkg) return res.status(400).json({ error: 'Invalid package' });
+
+  const users = loadUsers();
+  const user = Object.values(users).find(u => u.id === req.user.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const orderId = `VS-${user.id.slice(-8).toUpperCase()}-${Date.now()}`;
+  const { token, redirectUrl } = await createSnapToken(orderId, packageId, {
+    id: user.id, email: user.email,
+  });
+
+  // Save pending transaction
+  const transactions = loadTransactions();
+  transactions[orderId] = { orderId, userId: user.id, packageId, credits: pkg.credits, amountIdr: pkg.amountIdr, status: 'PENDING' };
+  saveTransactions(transactions);
+
+  res.json({ snapToken: token, redirectUrl, orderId });
 }));
 
 app.post('/api/payment/webhook', wrap(async (req, res) => {
-  const result = await handleWebhook(req.body);
-  res.json(result);
+  const body = req.body;
+  const { order_id, status_code, gross_amount, signature_key, transaction_status, fraud_status } = body;
+
+  const valid = verifyWebhookSignature(order_id, status_code, gross_amount, signature_key);
+  if (!valid) return res.status(403).json({ error: 'Invalid signature' });
+
+  const transactions = loadTransactions();
+  const tx = transactions[order_id];
+  if (!tx) return res.status(404).json({ error: 'Transaction not found' });
+
+  if (tx.status === 'SUCCESS') return res.json({ status: 'already_processed' });
+
+  if (isPaymentSuccess(transaction_status, fraud_status)) {
+    tx.status = 'SUCCESS';
+    addCredits(tx.userId, tx.credits);  // gives user more clip quota
+    console.log(`[payment] ✅ ${tx.credits} credits to user ${tx.userId}`);
+  } else if (['cancel', 'deny', 'expire'].includes(transaction_status)) {
+    tx.status = transaction_status === 'expire' ? 'EXPIRED' : 'FAILED';
+  }
+  saveTransactions(transactions);
+  res.json({ status: 'ok' });
 }));
+
+// ─── Transactions store ───────────────────────────────────────────────────
+function loadTransactions() {
+  try { const p = path.join(__dirname, 'transactions.json'); if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf8')); } catch {}
+  return {};
+}
+function saveTransactions(t) {
+  try { fs.writeFileSync(path.join(__dirname, 'transactions.json'), JSON.stringify(t, null, 2)); } catch {}
+}
+
+// ─── HEALTH ──────────────────────────────────────────────────────────────────
+app.get('/api/health', (req, res) => res.json({ ok: true, version: '2.0.0', ts: new Date().toISOString() }));
+app.get('/api/packages', (req, res) => res.json({ packages: CREDIT_PACKAGES }));
 
 // ─── MY JOBS HISTORY ─────────────────────────────────────────────────────────
 app.get('/api/jobs', requireAuth, wrap(async (req, res) => {
-  const db = getDb();
-  const jobs = db.prepare('SELECT * FROM jobs WHERE user_id = ? ORDER BY created_at DESC LIMIT 20').all(req.user.id);
-  res.json(jobs);
+  const userJobs = [];
+  for (const job of jobs.values()) {
+    if (job.user_id === req.user.id) userJobs.push(job);
+  }
+  res.json(userJobs.slice(0, 20));
 }));
-
-// ─── HEALTH ───────────────────────────────────────────────────────────────────
-app.get('/api/health', (req, res) => res.json({ ok: true, version: '1.0.0', ts: new Date().toISOString() }));
 
 // ─── SPA Fallback ─────────────────────────────────────────────────────────────
 app.get('*', (req, res) => {
@@ -241,9 +273,10 @@ app.get('*', (req, res) => {
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`\n🎬 Video Summarizer running at ${BASE_URL}`);
-  console.log(`   Free tier: ${process.env.FREE_CLIPS_PER_DAY || 5} clips/day`);
-  console.log(`   Midtrans: ${process.env.MIDTRANS_IS_PRODUCTION === 'true' ? 'PRODUCTION' : 'Sandbox'}\n`);
+  console.log(`\n🎬 Video Summarizer v2 running at ${BASE_URL}`);
+  console.log(`   AI: DeepSeek V4 Flash (opencode-go)`);
+  console.log(`   Midtrans: ${process.env.MIDTRANS_IS_PRODUCTION === 'true' ? 'PRODUCTION' : 'Sandbox'}`);
+  console.log(`   Free tier: ${PLAN_LIMITS.free} clips total\n`);
 });
 
 module.exports = app;
