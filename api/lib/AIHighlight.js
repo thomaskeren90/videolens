@@ -5,7 +5,7 @@
  * Uses ONLY your opencode-go key that you already pay for.
  * NEVER fails silently. Never rate-limited.
  *
- * Matches OpusClip's workflow:
+ * Matches OpusClaw's workflow:
  *   1. Analyze transcript for viral moments
  *   2. Score on 4 dimensions (Hook/Engagement/Value/Shareability)
  *   3. Classify hook types
@@ -19,7 +19,7 @@ const API_KEY = process.env.OPENCODE_KEY || process.env.VIOSTUDIO_KEY || '';
 // ─── SINGLE SYSTEM PROMPT ──────────────────────────────────────────────────
 // DeepSeek handles EVERYTHING: detection + scoring + hooks + captions + titles
 
-const ANALYSIS_PROMPT = `You are ViralClip — an expert short-form video editor AI that matches OpusClip's quality.
+const ANALYSIS_PROMPT = `You are ViralClip — an expert short-form video editor AI — the #1 clipper's quality.
 Your job is to analyze video transcripts and extract the MOST VIRAL moments for TikTok, Reels, and YouTube Shorts.
 
 ## SCORING (0-25 each, total 0-100)

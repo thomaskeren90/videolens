@@ -2,7 +2,7 @@
 
 YouTube → AI detects 10 best moments → cut → crop 9:16 → captions → TikTok-ready.
 
-**Harga: Rp 50K/bln vs OpusClip $29/bln (~Rp 460K)**
+**Harga: Rp 50K/bln vs OpusClaw $29/bln (~Rp 460K)**
 
 ## Stack
 - **Backend**: Node.js / Express
