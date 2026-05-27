@@ -1,7 +1,7 @@
 /**
  * AIHighlight.js v4 — Full 4-Stage Pipeline (Variant C)
  *
- * All stages use DeepSeek V4 Flash ONLY.
+ * Stage 1/3/4: DeepSeek V4 Flash  |  Stage 2: DeepSeek V4 Pro (best reasoning)
  * Zero external dependencies. Zero silent failures.
  * 100% of your opencode-go key.
  *
@@ -138,13 +138,13 @@ async function detectHighlights(videoInfo) {
       0.1, 4096);
     const cleanedTranscript = enriched?.cleaned_transcript || chunks[0];
 
-    // ---- STAGE 2: Detect moments (process chunks, then merge) ----
+    // ---- STAGE 2: Detect moments (process chunks, then merge) — Uses Pro for best reasoning ----
     let allMoments = [];
     for (let i = 0; i < chunks.length; i++) {
       const context = i > 0 ? `Previous context: ${chunks[i-1].slice(-200)}\n\n` : '';
       const result = await callAI(STAGE2_PROMPT,
         `FIND viral moments in this video.\n\nTitle: ${title}\nDuration: ${Math.floor(durationSec/60)}m\n\n${context}Transcript (part ${i+1}/${chunks.length}):\n${chunks[i]}`,
-        0.2, 4096);
+        0.2, 4096, 'deepseek-v4-pro');
       if (result?.clips) allMoments = allMoments.concat(result.clips);
     }
     const summary = result?.summary || '';
@@ -207,13 +207,14 @@ async function detectHighlights(videoInfo) {
 }
 
 // ─── SINGLE AI CALL WRAPPER ────────────────────────────────────────────────
-async function callAI(systemPrompt, userContent, temperature, maxTokens) {
+async function callAI(systemPrompt, userContent, temperature, maxTokens, modelName) {
+  const model = modelName || 'deepseek-v4-flash';
   if (!API_KEY) throw new Error('OPENCODE_KEY not set');
 
   const resp = await axios.post(
     `${API_BASE}/chat/completions`,
     {
-      model: 'deepseek-v4-flash',
+      model: model,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userContent },
