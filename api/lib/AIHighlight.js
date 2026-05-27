@@ -1,205 +1,276 @@
 /**
- * AIHighlight.js v3 — Single DeepSeek pipeline (100% reliable)
+ * AIHighlight.js v4 — Full 4-Stage Pipeline (Variant C)
  *
- * One AI call. One model. Zero external dependencies.
- * Uses ONLY your opencode-go key that you already pay for.
- * NEVER fails silently. Never rate-limited.
+ * All stages use DeepSeek V4 Flash ONLY.
+ * Zero external dependencies. Zero silent failures.
+ * 100% of your opencode-go key.
  *
- * Matches OpusClaw's workflow:
- *   1. Analyze transcript for viral moments
- *   2. Score on 4 dimensions (Hook/Engagement/Value/Shareability)
- *   3. Classify hook types
- *   4. Write hooks, captions, titles (all in one pass)
+ * Stage 1: Enrich transcript (clean, structure, add context)
+ * Stage 2: Detect moments + score (4-dimension virality)  
+ * Stage 3: Write hooks + captions (creative, higher temp)
+ * Stage 4: SEO titles + metadata (keywords, hashtags)
  */
 const axios = require('axios');
 
 const API_BASE = process.env.OPENCODE_BASE || 'https://opencode.ai/zen/go/v1';
 const API_KEY = process.env.OPENCODE_KEY || process.env.VIOSTUDIO_KEY || '';
 
-// ─── SINGLE SYSTEM PROMPT ──────────────────────────────────────────────────
-// DeepSeek handles EVERYTHING: detection + scoring + hooks + captions + titles
+// =====================================================================
+// STAGE 1: Transcript Enrichment
+// =====================================================================
+const STAGE1_PROMPT = `You are a transcript cleaner. Clean and structure the transcript below.
 
-const ANALYSIS_PROMPT = `You are ViralClip — an expert short-form video editor AI — the #1 clipper's quality.
-Your job is to analyze video transcripts and extract the MOST VIRAL moments for TikTok, Reels, and YouTube Shorts.
+Rules:
+- Remove filler words (um, uh, like, you know) when excessive
+- Fix obvious transcription errors
+- Add [laughter], [applause], [music] markers if context suggests them
+- Keep ALL content and timestamps intact
+- Return the cleaned transcript with timestamps preserved
+- Do NOT change any factual content
+- Do NOT add or remove information
+
+Return JSON:
+{
+  "cleaned_transcript": "string with timestamps and cleaned text"
+}`;
+
+// =====================================================================
+// STAGE 2: Moment Detection (Ultra)
+// =====================================================================
+const STAGE2_PROMPT = `You are ViralClip — an expert short-form video editor matching OpusClaw's quality. Analyze the transcript and find viral moments for TikTok/Reels/Shorts.
 
 ## SCORING (0-25 each, total 0-100)
 - hook_score (0-25): First 3 seconds — bold claim? question? surprise? shock?
 - engagement_score (0-25): Emotional energy — laughter? shock? passion? drama?
 - value_score (0-25): Insight — does this teach something useful?
 - shareability_score (0-25): Would someone send this to a friend?
-- total_score: sum of all four (0-100)
 
-## HOOK TYPES (classify each clip)
-- question: Opens with a curiosity-provoking question
-- statement: Bold claim or definitive opinion
-- statistic: Data point that surprises
-- story: Narrative hook ("So I was...", "This one time...")
-- contrast: Before/after or comparison
-- controversy: Hot take or disagreement with common belief
-- revelation: Surprising reveal or plot twist
-- reaction: Emotional response moment
-- demonstration: "Watch this" or "Let me show you"
-- none: Weak hook — avoid these clips
+## HOOK TYPES
+question | statement | statistic | story | contrast | controversy | revelation | reaction | demonstration | none
 
-## INCLUDE THESE MOMENTS
-contrarian claims, mistakes/lessons learned, concrete examples,
-before/after moments, surprising results, emotional reactions,
-complete Q&A exchanges, hot takes with reasoning, story arcs
-(setup→struggle→resolution in 15-60s), demonstrations,
-reveals, controversial statements
+## INCLUDE: contrarian claims, mistakes/lessons, examples, before/after,
+surprising results, emotional reactions, complete Q&A, hot takes,
+story arcs (setup→tension→payoff in 15-60s), demonstrations, reveals
 
-## EXCLUDE THESE MOMENTS
-intros/greetings, sponsor messages, vague setup/context,
-statements needing 30+ seconds of context, repeated points,
-definitions without examples, answer fragments ("yeah, definitely"),
-rambling/filler words, technical setup ("let me share my screen"),
-off-topic tangents, silence over 3 seconds, monotone delivery
+## EXCLUDE: intros, sponsors, vague setup, contextless quotes,
+repeated points, definitions without examples, answer fragments,
+rambling, technical setup, off-topic tangents, silence, monotone
 
-## HOOK TEXT RULES
-- Must work STANDALONE without original video context
-- Maximum 8 words
-- Create curiosity gap — make viewer NEED to watch
-- Examples: "The ONE thing nobody tells you", "This changes everything",
-  "Why 90% of people fail at this", "I couldn't believe my eyes"
+OUTPUT 8-15 moments. Be generous — Stage 3 will filter.
 
-## CAPTION STYLE
-- Conversational tone, 1-2 sentences
-- 2-3 relevant emojis
-- 3-5 hashtags (mix of broad and niche)
-- Hook in first line
+Return JSON:
+{
+  "clips": [{
+    "start_time": float, "end_time": float, "duration": float,
+    "text": "exact spoken text",
+    "hook_type": "string",
+    "hook_score": int 0-25,
+    "engagement_score": int 0-25,
+    "value_score": int 0-25,
+    "shareability_score": int 0-25,
+    "total_score": int 0-100,
+    "context_note": "why this works (1 sentence)"
+  }],
+  "summary": "1 sentence",
+  "key_topics": ["topic"]
+}`;
 
-Return ONLY valid JSON. No markdown, no code fences, no explanation.`;
+// =====================================================================
+// STAGE 3: Hook + Caption Generation (Creative, Higher Temp)
+// =====================================================================
+const STAGE3_PROMPT = `You are a viral short-form content writer. Given video segments with their scores, write attention-grabbing hooks and captions.
 
-// ─── MAIN FUNCTION ──────────────────────────────────────────────────────────
+For each segment:
+1. hook_text (≤8 words): Standalone attention grabber
+2. caption: 1-2 conversational sentences + 3-5 hashtags + 2-3 emojis
+3. hook_category: curiosity_gap|bold_claim|question|result|number|comparison|story_opener
+
+RULES:
+- Hooks must work WITHOUT the original video context
+- First 3 seconds of the clip must use the hook_text as the opener
+- Captions: conversational, lowercase where appropriate
+- Hashtags: mix of broad (viral, fyp) and niche (relevant to content)
+
+Return JSON array:
+[{
+  "start_time": float (pass through),
+  "hook_text": "≤8 words",
+  "hook_category": "string",
+  "caption": "string with emojis and hashtags",
+  "suggested_title": "3-8 words clickable"
+}]`;
+
+// =====================================================================
+// STAGE 4: SEO Title + Metadata
+// =====================================================================
+const STAGE4_PROMPT = `You are an SEO and metadata specialist for short-form video.
+
+Given video segments with hooks and captions, write OPTIMIZED titles and metadata.
+
+For each segment:
+1. seo_title: Optimized for TikTok/YouTube search (5-10 words)
+2. seo_keywords: 5-7 relevant keywords for discovery
+3. suggested_hashtags: 5-7 trending hashtags
+4. thumbnail_text: 2-4 words for thumbnail overlay
+
+Return JSON array:
+[{
+  "start_time": float (pass through),
+  "seo_title": "string",
+  "seo_keywords": ["keyword"],
+  "suggested_hashtags": ["hashtag"],
+  "thumbnail_text": "string"
+}]`;
+
+// =====================================================================
+// MAIN EXPORT
+// =====================================================================
 async function detectHighlights(videoInfo) {
   const { title, description, duration, transcript, chapters } = videoInfo;
-
-  // Build transcript with timestamps
-  const transcriptText = buildTranscriptText(transcript);
-  const durationMin = Math.floor((duration || 0) / 60);
   const durationSec = duration || 0;
+  const transcriptText = buildTranscriptText(transcript);
+  const chunks = chunkTranscriptSafe(transcriptText, 4000);
 
-  const userContent = [
-    `ANALYZE this video and find the 10 best moments to clip:`,
-    ``,
-    `Title: ${title || 'Untitled'}`,
-    `Duration: ${durationMin}m ${Math.round(durationSec % 60)}s`,
-    `Description: ${(description || '').slice(0, 500)}`,
-    chapters?.length ? `Chapters:\n${chapters.map(c => `${c.time}s - ${c.title}`).join('\n')}` : '',
-    ``,
-    transcriptText ? `Transcript:\n${chunkTranscript(transcriptText)}` : 'No transcript available.',
-    ``,
-    `Return JSON:`,
-    `{`,
-    `  "clips": [{`,
-    `    "start_time": float, "end_time": float, "duration": float,`,
-    `    "text": "exact spoken text",`,
-    `    "hook_type": "question|statement|statistic|story|contrast|controversy|revelation|reaction|demonstration|none",`,
-    `    "hook_text": "≤8 words standalone hook",`,
-    `    "hook_score": 0-25, "engagement_score": 0-25, "value_score": 0-25, "shareability_score": 0-25, "total_score": 0-100,`,
-    `    "reason": "why this works (1 sentence)",`,
-    `    "caption": "TikTok caption with emojis + hashtags",`,
-    `    "suggested_title": "3-8 word clickable title"`,
-    `  }],`,
-    `  "summary": "1 sentence",`,
-    `  "key_topics": ["topic1"]`,
-    `}`
-  ].filter(Boolean).join('\n');
-
-  // Call DeepSeek (always works, never rate-limited)
-  let result;
   try {
-    result = await callDeepSeek(userContent);
+    // ---- STAGE 1: Enrich transcript ----
+    const enriched = await callAI(STAGE1_PROMPT,
+      `Clean this transcript:\n\nTitle: ${title}\n\n${chunks[0] || transcriptText}`,
+      0.1, 4096);
+    const cleanedTranscript = enriched?.cleaned_transcript || chunks[0];
+
+    // ---- STAGE 2: Detect moments (process chunks, then merge) ----
+    let allMoments = [];
+    for (let i = 0; i < chunks.length; i++) {
+      const context = i > 0 ? `Previous context: ${chunks[i-1].slice(-200)}\n\n` : '';
+      const result = await callAI(STAGE2_PROMPT,
+        `FIND viral moments in this video.\n\nTitle: ${title}\nDuration: ${Math.floor(durationSec/60)}m\n\n${context}Transcript (part ${i+1}/${chunks.length}):\n${chunks[i]}`,
+        0.2, 4096);
+      if (result?.clips) allMoments = allMoments.concat(result.clips);
+    }
+    const summary = result?.summary || '';
+    const keyTopics = result?.key_topics || [];
+
+    // Post-process: deduplicate, sort by score, space them out
+    const topMoments = deduplicateAndRank(allMoments, 10, 30);
+    if (topMoments.length === 0) throw new Error('No moments detected');
+
+    // ---- STAGE 3: Write hooks + captions ----
+    const hooksResult = await callAI(STAGE3_PROMPT,
+      `Write hooks and captions for these ${topMoments.length} video segments:\n\n${JSON.stringify(topMoments.map(m => ({
+        start_time: m.start_time, text: m.text, hook_type: m.hook_type, total_score: m.total_score
+      })), null, 2)}`,
+      0.6, 2048);
+
+    // ---- STAGE 4: SEO titles + metadata ----
+    const seoResult = await callAI(STAGE4_PROMPT,
+      `Write SEO titles and metadata for these video segments:\n\n${JSON.stringify(topMoments.map(m => ({
+        start_time: m.start_time,
+        text: m.text,
+        hook_text: hooksResult?.find(h => h.start_time === m.start_time)?.hook_text || '',
+        caption: hooksResult?.find(h => h.start_time === m.start_time)?.caption || '',
+      })), null, 2)}`,
+      0.4, 2048);
+
+    // ---- MERGE ALL STAGES ----
+    const clips = topMoments.map((m, i) => {
+      const h = (hooksResult || []).find(x => Math.abs(x.start_time - m.start_time) < 1);
+      const s = (seoResult || []).find(x => Math.abs(x.start_time - m.start_time) < 1);
+      return {
+        rank: i + 1,
+        start_sec: m.start_time,
+        end_sec: m.end_time,
+        duration: m.duration || (m.end_time - m.start_time),
+        text: m.text || '',
+        hook_type: m.hook_type || 'none',
+        hook_text: h?.hook_text || '',
+        hook_score: m.hook_score || 0,
+        engagement_score: m.engagement_score || 0,
+        value_score: m.value_score || 0,
+        shareability_score: m.shareability_score || 0,
+        total_score: m.total_score || 0,
+        virality_level: getLevel(m.total_score || 0),
+        reason: m.context_note || '',
+        caption: h?.caption || '',
+        suggested_title: h?.suggested_title || s?.seo_title || '',
+        seo_keywords: s?.seo_keywords || [],
+        suggested_hashtags: s?.suggested_hashtags || [],
+        thumbnail_text: s?.thumbnail_text || '',
+      };
+    });
+
+    return { clips, summary, key_topics: keyTopics };
+
   } catch (err) {
-    console.error('[AIHighlight] DeepSeek error:', err.message);
+    console.error('[AIHighlight] Pipeline failed, using fallback:', err.message);
     return fallbackHighlights(durationSec);
   }
-
-  if (!result || !result.clips || result.clips.length === 0) {
-    console.warn('[AIHighlight] No clips from AI, using fallback');
-    return fallbackHighlights(durationSec);
-  }
-
-  // Sort by score, take top 10, assign ranks
-  const clips = result.clips
-    .sort((a, b) => (b.total_score || 0) - (a.total_score || 0))
-    .slice(0, 10)
-    .map((c, i) => ({
-      rank: i + 1,
-      start_sec: Math.max(0, parseFloat(c.start_time) || 0),
-      end_sec: Math.min(durationSec, parseFloat(c.end_time) || (parseFloat(c.start_time) || 0) + 30),
-      duration: parseFloat(c.duration) || 30,
-      text: c.text || '',
-      hook_type: c.hook_type || 'none',
-      hook_text: c.hook_text || '',
-      hook_score: Math.min(25, Math.max(0, parseInt(c.hook_score) || 0)),
-      engagement_score: Math.min(25, Math.max(0, parseInt(c.engagement_score) || 0)),
-      value_score: Math.min(25, Math.max(0, parseInt(c.value_score) || 0)),
-      shareability_score: Math.min(25, Math.max(0, parseInt(c.shareability_score) || 0)),
-      total_score: Math.min(100, Math.max(0, parseInt(c.total_score) || 0)),
-      virality_level: getLevel(c.total_score || 0),
-      reason: c.reason || '',
-      caption: c.caption || '',
-      suggested_title: c.suggested_title || '',
-    }));
-
-  return {
-    clips,
-    summary: result.summary || '',
-    key_topics: result.key_topics || [],
-  };
 }
 
-// ─── DEEPSEEK CALL (always works) ──────────────────────────────────────────
-async function callDeepSeek(userContent) {
+// ─── SINGLE AI CALL WRAPPER ────────────────────────────────────────────────
+async function callAI(systemPrompt, userContent, temperature, maxTokens) {
   if (!API_KEY) throw new Error('OPENCODE_KEY not set');
 
-  const response = await axios.post(
+  const resp = await axios.post(
     `${API_BASE}/chat/completions`,
     {
       model: 'deepseek-v4-flash',
       messages: [
-        { role: 'system', content: ANALYSIS_PROMPT },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: userContent },
       ],
-      temperature: 0.3,
-      max_tokens: 4096,
+      temperature,
+      max_tokens: maxTokens,
       top_p: 0.9,
     },
     {
-      headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
       timeout: 30000,
     }
   );
 
-  const content = response.data?.choices?.[0]?.message?.content;
-  if (!content) throw new Error('Empty response from AI');
+  const content = resp.data?.choices?.[0]?.message?.content;
+  if (!content) throw new Error('Empty response');
 
   const cleaned = content.replace(/```json|```/g, '').trim();
   return JSON.parse(cleaned);
 }
 
-// ─── HELPERS ───────────────────────────────────────────────────────────────
-function buildTranscriptText(segments) {
-  if (!segments || !Array.isArray(segments)) return '';
-  return segments.map(s =>
-    `[${fmtTime(s.start)}] ${s.text}`
-  ).join('\n');
+// ─── POST-PROCESSING ────────────────────────────────────────────────────────
+function deduplicateAndRank(moments, maxClips = 10, minSpacing = 30) {
+  if (!moments || moments.length === 0) return [];
+
+  // Sort by score descending
+  const sorted = [...moments].sort((a, b) => (b.total_score || 0) - (a.total_score || 0));
+
+  // Filter: ensure min spacing between clips
+  const selected = [];
+  for (const m of sorted) {
+    const overlaps = selected.some(s =>
+      Math.abs((s.start_time || 0) - (m.start_time || 0)) < minSpacing
+    );
+    if (!overlaps) {
+      selected.push({
+        start_time: parseFloat(m.start_time) || 0,
+        end_time: parseFloat(m.end_time) || (parseFloat(m.start_time) || 0) + 30,
+        duration: parseFloat(m.duration) || 30,
+        text: m.text || '',
+        hook_type: m.hook_type || 'none',
+        hook_score: clamp(m.hook_score, 0, 25),
+        engagement_score: clamp(m.engagement_score, 0, 25),
+        value_score: clamp(m.value_score, 0, 25),
+        shareability_score: clamp(m.shareability_score, 0, 25),
+        total_score: clamp(m.total_score, 0, 100),
+        context_note: m.context_note || m.reason || '',
+      });
+    }
+    if (selected.length >= maxClips) break;
+  }
+
+  return selected;
 }
 
-function fmtTime(s) {
-  const m = Math.floor((s || 0) / 60);
-  const sec = Math.floor((s || 0) % 60);
-  return `${m}:${sec.toString().padStart(2, '0')}`;
-}
-
-function chunkTranscript(text, maxChars = 5000) {
-  if (!text || text.length <= maxChars) return text;
-  return text.slice(0, maxChars) +
-    `\n\n...[truncated from ${text.length} total chars — focused on first portion]...`;
+function clamp(val, min, max) {
+  return Math.min(max, Math.max(min, parseInt(val) || 0));
 }
 
 function getLevel(score) {
@@ -209,6 +280,27 @@ function getLevel(score) {
   return 'skip';
 }
 
+function buildTranscriptText(segments) {
+  if (!segments || !Array.isArray(segments)) return '';
+  return segments.map(s => `[${fmtTime(s.start)}] ${s.text}`).join('\n');
+}
+
+function fmtTime(s) {
+  const m = Math.floor((s || 0) / 60);
+  const sec = Math.floor((s || 0) % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+function chunkTranscriptSafe(text, maxChars = 4000) {
+  if (!text) return [''];
+  if (text.length <= maxChars) return [text];
+  const chunks = [];
+  for (let i = 0; i < text.length; i += maxChars) {
+    chunks.push(text.slice(i, i + maxChars));
+  }
+  return chunks;
+}
+
 function fallbackHighlights(duration, count = 10) {
   const interval = Math.floor((duration || 600) / (count + 1));
   return {
@@ -216,16 +308,12 @@ function fallbackHighlights(duration, count = 10) {
       rank: i + 1,
       start_sec: interval * (i + 1),
       end_sec: Math.min(duration || 600, interval * (i + 1) + 30),
-      duration: 30,
-      text: '',
+      duration: 30, text: '',
       hook_type: 'none', hook_text: '',
       hook_score: 0, engagement_score: 0, value_score: 0, shareability_score: 0, total_score: 0,
-      virality_level: 'skip',
-      reason: 'Fallback clip (AI unavailable)',
-      caption: '', suggested_title: `Clip #${i + 1}`,
+      virality_level: 'skip', reason: 'Fallback', caption: '', suggested_title: '',
+      seo_keywords: [], suggested_hashtags: [], thumbnail_text: '',
     })),
-    summary: 'Summary unavailable',
-    key_topics: [],
   };
 }
 
