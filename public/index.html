@@ -197,8 +197,12 @@ function render(){
       <div class="topbar">
         <div style="font-size:14px;font-weight:600">${t.app}</div>
         <div class="top-icons">
-          <i class="ti ti-search" onclick="alert('Search')"></i>
-          <i class="ti ti-bell" onclick="alert('Notifications')"></i>
+          <span style="display:flex;align-items:center;gap:6px;background:var(--PL);padding:4px 10px;border-radius:100px;font-size:12px;font-weight:600;color:var(--P);cursor:pointer" onclick="alert('Buy credits')">
+            ⚡ <span id="creditBadge">90</span>
+          </span>
+          <span style="font-size:11px;color:var(--P);cursor:pointer;font-weight:500" onclick="alert('Buy credits')">+ Add credits</span>
+          <i class="ti ti-search"></i>
+          <i class="ti ti-bell"></i>
           <div class="side-avatar" style="width:28px;height:28px;font-size:11px;cursor:pointer">${user?user.email[0].toUpperCase():'?'}</div>
         </div>
       </div>
