@@ -4,6 +4,74 @@
 
 A web app called **"KlikClip"** — paste a YouTube link or upload video → AI detects the 10 best moments → cuts them into TikTok-ready clips → user downloads.
 
+## Design Intelligence (UI/UX Pro Max)
+
+Before building, apply these professional UI/UX design rules:
+
+### Reasoning Rules
+1. **Every component needs 4 states**: default, hover, active/focus, disabled. Define colors and shadows for each.
+2. **Spacing scale**: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64px — use consistently.
+3. **Typography hierarchy**: 3 levels max per page. Headings bold (700), body regular (400), small medium (500).
+4. **Touch targets**: minimum 44×44px on mobile. Buttons, links, inputs.
+5. **Loading states**: every async action shows skeleton, spinner, or progress bar. Never blank.
+6. **Error states**: every input shows inline error message + red border. Toast for system errors.
+7. **Empty states**: every list/table shows illustration + message when no data.
+8. **Color contrast**: text on colored backgrounds meets WCAG AA (4.5:1 ratio). Use a contrast checker.
+9. **Card design**: white bg, subtle border (#E5E7EB), 12-16px border-radius, hover lift with shadow.
+10. **Mobile first**: design for 375px first, then tablet 768px, then desktop 1280px.
+
+### Component Specs
+- **Buttons**: 48px min height, 14-16px font, pill radius (100px), icon + text gap 8px
+- **Cards**: 16px padding, 12px radius, white bg, border 1px #E5E7EB
+- **Inputs**: 48px height, 12px padding, 12px radius, focus ring 2px primary
+- **Modals**: centered, 90% width mobile / 480px desktop, backdrop blur, close X top right
+- **Bottom nav**: 64px height, 5 items max, active icon + label, safe area padding
+- **Sidebar**: 240px width, icons 24px, labels 14px, active state with left border
+
+### Accessibility
+- All interactive elements keyboard-navigable (Tab order)
+- aria-labels on icon-only buttons
+- Form inputs paired with labels, not placeholders only
+- Focus visible ring on all interactive elements
+- Touch-friendly: no hover-only interactions on mobile
+
+# 🎬 CLAUDE PROMPT — Build KlikClip Web App
+
+## The Product
+
+A web app called **"KlikClip"** — paste a YouTube link or upload video → AI detects the 10 best moments → cuts them into TikTok-ready clips → user downloads.
+
+## Design Intelligence (UI/UX Pro Max)
+
+Before building, apply these professional UI/UX design rules:
+
+### Reasoning Rules
+1. **Every component needs 4 states**: default, hover, active/focus, disabled. Define colors and shadows for each.
+2. **Spacing scale**: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64px — use consistently.
+3. **Typography hierarchy**: 3 levels max per page. Headings bold (700), body regular (400), small medium (500).
+4. **Touch targets**: minimum 44×44px on mobile. Buttons, links, inputs.
+5. **Loading states**: every async action shows skeleton, spinner, or progress bar. Never blank.
+6. **Error states**: every input shows inline error message + red border. Toast for system errors.
+7. **Empty states**: every list/table shows illustration + message when no data.
+8. **Color contrast**: text on colored backgrounds meets WCAG AA (4.5:1 ratio). Use a contrast checker.
+9. **Card design**: white bg, subtle border (#E5E7EB), 12-16px border-radius, hover lift with shadow.
+10. **Mobile first**: design for 375px first, then tablet 768px, then desktop 1280px.
+
+### Component Specs
+- **Buttons**: 48px min height, 14-16px font, pill radius (100px), icon + text gap 8px
+- **Cards**: 16px padding, 12px radius, white bg, border 1px #E5E7EB
+- **Inputs**: 48px height, 12px padding, 12px radius, focus ring 2px primary
+- **Modals**: centered, 90% width mobile / 480px desktop, backdrop blur, close X top right
+- **Bottom nav**: 64px height, 5 items max, active icon + label, safe area padding
+- **Sidebar**: 240px width, icons 24px, labels 14px, active state with left border
+
+### Accessibility
+- All interactive elements keyboard-navigable (Tab order)
+- aria-labels on icon-only buttons
+- Form inputs paired with labels, not placeholders only
+- Focus visible ring on all interactive elements
+- Touch-friendly: no hover-only interactions on mobile
+
 ## Design Language
 
 ### Color Palette (Gojek-Inspired)
