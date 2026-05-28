@@ -1,6 +1,6 @@
 # Session Summary — 2026-04-19
 
-## Project: VideoLens — AI Video Summarizer
+## Project: KlikClip — AI TikTok Clipper
 
 **User:** thomaskeren90  
 **Duration:** 22:49 – 23:46 GMT+8 (~1 hour)  
@@ -11,7 +11,7 @@
 ## What We Built
 
 ### 1. Competitive Research
-- Analyzed **12 video summarizer apps**
+- Analyzed **12 KlikClip apps**
 - Ranked by revenue: Otter.ai ($100M) → Sider ($30-50M) → Monica ($15-25M) → Eightify ($540K)
 - Scraped **26+ user reviews** from Chrome Web Store, Reddit, G2, Product Hunt
 - Identified **15 pain points** ranked by severity
@@ -30,7 +30,7 @@
 ### 3. MVP Built
 
 ```
-videolens/
+KlikClip/
 ├── extension/              Chrome Extension (Manifest V3)
 │   ├── manifest.json       Extension config
 │   ├── content.js          Injects button on YouTube + extracts transcripts
@@ -90,4 +90,4 @@ videolens/
 ## Files Created
 - `/root/.openclaw/workspace/Video_Summarizer_Research.xlsx`
 - `/root/.openclaw/workspace/Video_Summarizer_Competitive_Analysis.xlsx`
-- `/root/.openclaw/workspace/videolens/` (full project)
+- `/root/.openclaw/workspace/klikclip/` (full project)

@@ -1,9 +1,9 @@
-# Video Summerizer — AI Viral Clip Factory 🎬
+# KlikClip — AI Viral Clip Factory 🎬
 # Deploy on Render: https://render.com
 
 services:
   - type: web
-    name: video-summerizer
+    name: klikclip
     env: node
     region: singapore
     plan: free

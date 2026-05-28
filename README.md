@@ -1,4 +1,4 @@
-# 🎬 Video Summarizer — AI Clipper TikTok
+# 🎬 KlikClip — AI Clipper TikTok
 
 YouTube → AI detects 10 best moments → cut → crop 9:16 → captions → TikTok-ready.
 

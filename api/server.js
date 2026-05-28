@@ -1,5 +1,5 @@
 /**
- * Video Summarizer — Express Server v2
+ * KlikClip — Express Server v2
  * DeepSeek + FFmpeg clipper. JSON file storage. No SQLite.
  */
 require('dotenv').config();
@@ -273,7 +273,7 @@ app.get('*', (req, res) => {
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`\n🎬 Video Summarizer v2 running at ${BASE_URL}`);
+  console.log(`\n🎬 KlikClip v2 running at ${BASE_URL}`);
   console.log(`   AI: DeepSeek V4 Flash (opencode-go)`);
   console.log(`   Midtrans: ${process.env.MIDTRANS_IS_PRODUCTION === 'true' ? 'PRODUCTION' : 'Sandbox'}`);
   console.log(`   Free tier: ${PLAN_LIMITS.free} clips total\n`);

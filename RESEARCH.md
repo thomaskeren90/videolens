@@ -1,5 +1,5 @@
 # 🏆 ULTIMATE Highlight Detection Prompts
-## Production-Ready Variants for Video Summerizer
+## Production-Ready Variants for KlikClip
 
 ### Table of Contents
 - [Architecture Overview](#architecture-overview)

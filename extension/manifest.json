@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "VideoLens — AI Video Summarizer",
+  "name": "KlikClip — AI TikTok Clipper",
   "version": "1.0.0",
   "description": "Save hours. Get instant AI summaries, keywords & storylines from any YouTube video. 5 free videos daily.",
   "permissions": ["activeTab", "storage"],
-  "host_permissions": ["https://www.youtube.com/*", "https://api.videolens.ai/*"],
+  "host_permissions": ["https://www.youtube.com/*", "https://api.KlikClip.ai/*"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

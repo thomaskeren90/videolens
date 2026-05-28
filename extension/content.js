@@ -1,12 +1,12 @@
 /* ============================================
-   VideoLens — Content Script
+   KlikClip — Content Script
    Injects the Summarize button on YouTube
    ============================================ */
 
 (function () {
   'use strict';
 
-  const API_BASE = 'https://api.videolens.ai'; // Change to your backend
+  const API_BASE = 'https://api.KlikClip.ai'; // Change to your backend
   let panelInjected = false;
   let currentVideoId = null;
 
@@ -73,7 +73,7 @@
       }
 
     } catch (err) {
-      console.log('[VideoLens] Extension transcript extraction failed:', err.message);
+      console.log('[KlikClip] Extension transcript extraction failed:', err.message);
     }
     return null;
   }
@@ -116,7 +116,7 @@
     currentVideoId = videoId;
 
     // Remove old button
-    const oldBtn = document.getElementById('videolens-btn');
+    const oldBtn = document.getElementById('KlikClip-btn');
     if (oldBtn) oldBtn.remove();
 
     // Find insertion point (below video title)
@@ -124,13 +124,13 @@
     if (!target) return;
 
     const btn = document.createElement('button');
-    btn.id = 'videolens-btn';
+    btn.id = 'KlikClip-btn';
     btn.innerHTML = `
       <svg class="vl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10"/>
         <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/>
       </svg>
-      <span>Summarize with VideoLens</span>
+      <span>Summarize with KlikClip</span>
       <span class="vl-free-badge">FREE</span>
     `;
 
@@ -145,8 +145,8 @@
       panelInjected = true;
     }
 
-    const panel = document.getElementById('videolens-panel');
-    const backdrop = document.getElementById('videolens-backdrop');
+    const panel = document.getElementById('KlikClip-panel');
+    const backdrop = document.getElementById('KlikClip-backdrop');
     panel.classList.add('open');
     backdrop.classList.add('open');
 
@@ -159,8 +159,8 @@
 
   // ── Close panel ──
   function closePanel() {
-    const panel = document.getElementById('videolens-panel');
-    const backdrop = document.getElementById('videolens-backdrop');
+    const panel = document.getElementById('KlikClip-panel');
+    const backdrop = document.getElementById('KlikClip-backdrop');
     panel.classList.remove('open');
     backdrop.classList.remove('open');
   }
@@ -169,13 +169,13 @@
   function injectPanelDOM() {
     // Backdrop
     const backdrop = document.createElement('div');
-    backdrop.id = 'videolens-backdrop';
+    backdrop.id = 'KlikClip-backdrop';
     backdrop.addEventListener('click', closePanel);
     document.body.appendChild(backdrop);
 
     // Panel
     const panel = document.createElement('div');
-    panel.id = 'videolens-panel';
+    panel.id = 'KlikClip-panel';
     panel.innerHTML = `
       <div class="vl-panel-header">
         <h2>
@@ -183,9 +183,9 @@
             <circle cx="12" cy="12" r="10"/>
             <polygon points="10 8 16 12 10 16 10 8" fill="#6C5CE7" stroke="none"/>
           </svg>
-          VideoLens
+          KlikClip
         </h2>
-        <button class="vl-close-btn" onclick="document.getElementById('videolens-panel').classList.remove('open');document.getElementById('videolens-backdrop').classList.remove('open');">✕</button>
+        <button class="vl-close-btn" onclick="document.getElementById('KlikClip-panel').classList.remove('open');document.getElementById('KlikClip-backdrop').classList.remove('open');">✕</button>
       </div>
       <div class="vl-panel-body" id="vl-body">
         <!-- Dynamic content goes here -->
@@ -375,7 +375,7 @@
         <div class="vl-upgrade-cta">
           <p>⚡ Running low on summaries!</p>
           <span>Unlimited summaries for $4.99/mo</span>
-          <button class="vl-upgrade-btn" onclick="window.open('https://videolens.ai/upgrade', '_blank')">Upgrade →</button>
+          <button class="vl-upgrade-btn" onclick="window.open('https://klikclip.ai/upgrade', '_blank')">Upgrade →</button>
         </div>
       `;
     }
@@ -459,7 +459,7 @@
 
     if (format === 'markdown') {
       const blob = new Blob([text], { type: 'text/markdown' });
-      downloadBlob(blob, `videolens-${getVideoId()}.md`);
+      downloadBlob(blob, `KlikClip-${getVideoId()}.md`);
     }
   }
 
@@ -485,7 +485,7 @@
       });
     }
 
-    text += `\n---\n*Summarized by VideoLens — videolens.ai*`;
+    text += `\n---\n*Summarized by KlikClip — KlikClip.ai*`;
     return text;
   }
 
@@ -506,7 +506,7 @@
         <span>You've used all 5 free summaries today.</span>
         <br><span>Come back tomorrow or upgrade for unlimited.</span>
         <br>
-        <button class="vl-upgrade-btn" onclick="window.open('https://videolens.ai/upgrade', '_blank')">
+        <button class="vl-upgrade-btn" onclick="window.open('https://klikclip.ai/upgrade', '_blank')">
           Get Unlimited — $4.99/mo
         </button>
         <p style="font-size:11px; color:rgba(255,255,255,0.5); margin-top:12px;">
@@ -522,7 +522,7 @@
       <div class="vl-error">
         <p>Something went wrong</p>
         <p style="font-size:12px; color:#888; margin-top:8px;">${escapeHtml(msg)}</p>
-        <button onclick="document.getElementById('videolens-btn').click()">Try Again</button>
+        <button onclick="document.getElementById('KlikClip-btn').click()">Try Again</button>
       </div>
     `;
   }
@@ -554,5 +554,5 @@
     setTimeout(injectButton, 1500);
   }
 
-  console.log('[VideoLens] Extension loaded ✓');
+  console.log('[KlikClip] Extension loaded ✓');
 })();

@@ -1,9 +1,9 @@
 /* ============================================
-   VideoLens — Injected Styles for YouTube
+   KlikClip — Injected Styles for YouTube
    ============================================ */
 
 /* Floating summarize button */
-#videolens-btn {
+#KlikClip-btn {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -24,17 +24,17 @@
   letter-spacing: -0.01em;
 }
 
-#videolens-btn:hover {
+#KlikClip-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(108, 92, 231, 0.45);
 }
 
-#videolens-btn .vl-icon {
+#KlikClip-btn .vl-icon {
   width: 20px;
   height: 20px;
 }
 
-#videolens-btn .vl-free-badge {
+#KlikClip-btn .vl-free-badge {
   background: rgba(255,255,255,0.2);
   padding: 2px 8px;
   border-radius: 6px;
@@ -43,7 +43,7 @@
 }
 
 /* Summary panel overlay */
-#videolens-panel {
+#KlikClip-panel {
   position: fixed;
   top: 0;
   right: -520px;
@@ -59,15 +59,15 @@
   box-shadow: -10px 0 40px rgba(0,0,0,0.5);
 }
 
-#videolens-panel.open {
+#KlikClip-panel.open {
   right: 0;
 }
 
-#videolens-panel::-webkit-scrollbar {
+#KlikClip-panel::-webkit-scrollbar {
   width: 6px;
 }
 
-#videolens-panel::-webkit-scrollbar-thumb {
+#KlikClip-panel::-webkit-scrollbar-thumb {
   background: #333;
   border-radius: 3px;
 }
@@ -463,7 +463,7 @@
 }
 
 /* Overlay backdrop */
-#videolens-backdrop {
+#KlikClip-backdrop {
   position: fixed;
   top: 0;
   left: 0;
@@ -476,14 +476,14 @@
   transition: opacity 0.3s;
 }
 
-#videolens-backdrop.open {
+#KlikClip-backdrop.open {
   opacity: 1;
   pointer-events: all;
 }
 
 /* Responsive */
 @media (max-width: 600px) {
-  #videolens-panel {
+  #KlikClip-panel {
     width: 100%;
     right: -100%;
   }

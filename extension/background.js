@@ -1,8 +1,8 @@
 /* ============================================
-   VideoLens — Background Service Worker
+   KlikClip — Background Service Worker
    ============================================ */
 
-const API_BASE = 'https://api.videolens.ai';
+const API_BASE = 'https://api.KlikClip.ai';
 
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
