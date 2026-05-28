@@ -29,7 +29,7 @@ const jobs = new Map();
 // ─── Middleware ──────────────────────────────────────────────────────────────
 app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json({ limit: '50mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use('/clips', express.static(CLIPS_DIR));
 
 const wrap = fn => async (req, res) => {
@@ -268,7 +268,7 @@ app.get('/api/jobs', requireAuth, wrap(async (req, res) => {
 // ─── SPA Fallback ─────────────────────────────────────────────────────────────
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) return res.status(404).json({ error: 'Not found' });
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 // ─── Start ────────────────────────────────────────────────────────────────────
