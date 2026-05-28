@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>Video Summerizer — AI Viral Clip Factory</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',-apple-system,sans-serif}
+:root{--P:#00AA13;--PD:#008A0E;--PDX:#005E09;--PL:#E6F7E8;--PXL:#F0FCF0;--BG:#F5F7FA;--W:#fff;--T:#1F2937;--TM:#6B7280;--TL:#9CA3AF;--B:#E5E7EB}
+body{background:var(--BG);color:var(--T);min-height:100vh}
+.vs-sidebar{width:240px;position:fixed;left:0;top:0;height:100%;background:var(--W);border-right:1px solid var(--B);z-index:50;padding:20px 0}
+.vs-main{margin-left:240px;min-height:100vh}
+.vs-top{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:var(--W);border-bottom:1px solid var(--B);position:sticky;top:0;z-index:40}
+.vs-content{padding:24px}
+@media(max-width:640px){
+  .vs-sidebar{display:none}
+  .vs-main{margin-left:0}
+  .vs-bottom-nav{display:flex!important}
+  .vs-content{padding:16px 12px;padding-bottom:80px}
+  .vs-top{padding:0 12px}
+}
+@media(min-width:641px){
+  .vs-bottom-nav{display:none}
+}
+/* Cards */
+.card{background:var(--W);border:1px solid var(--B);border-radius:16px;padding:20px;transition:all .2s}
+.card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08);transform:translateY(-2px)}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:100px;cursor:pointer;font-weight:600;font-size:14px;padding:12px 24px;transition:all .2s}
+.btn-primary{background:linear-gradient(180deg,#00C416,var(--P),var(--PD));color:#fff;box-shadow:0 4px 14px rgba(0,170,19,.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,170,19,.4)}
+.btn-primary:active{transform:scale(.97)}
+.btn-outline{background:transparent;color:var(--P);border:2px solid var(--P)}
+.btn-outline:hover{background:var(--PL)}
+/* Pills */
+.pill{display:inline-flex;align-items:center;gap:4px;padding:7px 14px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--B);background:var(--W);color:var(--TM);transition:all .15s}
+.pill.active{background:var(--P);color:#fff;border-color:var(--P)}
+.pill:hover:not(.active){border-color:var(--P);color:var(--P)}
+/* Sidebar */
+.side-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;color:var(--TM);font-size:13px;font-weight:500;border-right:3px solid transparent;transition:all .15s}
+.side-item:hover{background:var(--PL);color:var(--T)}
+.side-item.active{color:var(--P);background:var(--PL);border-right-color:var(--P);font-weight:600}
+.side-logo{font-size:18px;font-weight:800;padding:0 20px 24px;display:flex;align-items:center;gap:10px}
+.side-logo span{color:var(--P)}
+/* Bottom nav */
+.bnav{position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--W);border-top:1px solid var(--B);display:flex;z-index:100}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:transparent;cursor:pointer;font-size:9px;font-weight:500;color:var(--TL);font-family:Inter,sans-serif;transition:color .15s}
+.bnav-item.active{color:var(--P);font-weight:700}
+.bnav-item.new{position:relative}
+.bnav-new{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--P),var(--PD));display:flex;align-items:center;justify-content:center;margin-top:-20px;box-shadow:0 4px 16px rgba(0,170,19,.33)}
+/* Input */
+input{font-family:Inter,sans-serif}
+.input{width:100%;height:52px;padding:0 16px;border-radius:12px;border:1.5px solid var(--B);background:var(--W);font-size:14px;color:var(--T);outline:none;transition:all .2s}
+.input:focus{border-color:var(--P);box-shadow:0 0 0 3px rgba(0,170,19,.1)}
+/* Upload zone */
+.drop-zone{border:2px dashed var(--B);border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--BG)}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--P);background:var(--PL)}
+.drop-zone i{font-size:36px;color:var(--P);margin-bottom:8px}
+.drop-zone p{font-size:13px;color:var(--TM)}
+.drop-zone small{font-size:11px;color:var(--TL)}
+/* Badge */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:100px;font-size:11px;font-weight:700;white-space:nowrap}
+.badge-high{background:#D1FAE5;color:#065F46}
+.badge-med{background:#FEF3C7;color:#92400E}
+.badge-low{background:#FEE2E2;color:#991B1B}
+/* Grid */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:640px){.grid-2{grid-template-columns:1fr}.grid-3{grid-template-columns:1fr}}
+@media(min-width:641px)and(max-width:1024px){.grid-3{grid-template-columns:1fr 1fr}}
+/* Split cards */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// LANGUAGE SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════
+const L = {
+  en: {
+    app:"Video Summerizer", tag:"AI Viral Clip Factory",
+    nav:["Home","My Projects","Learning Center","Pricing","Settings"],
+    bnav:["Home","Projects","New","Stats","Account"],
+    heroT:"Generate 10 Viral Clips Today",
+    heroS:"Paste a YouTube link or upload your video — AI detects the best moments and creates TikTok-ready clips instantly.",
+    urlPH:"Paste YouTube, TikTok, or Instagram URL…",
+    or:"— or —",
+    dropT:"Drop video here or click to upload",
+    dropS:"MP4, MOV, AVI up to 2GB",
+    style:"Content Style",
+    styles:["🎙 Podcast","🎮 Gaming","📸 Vlog","✨ Auto"],
+    gen:"🔥 Generate 10 Clips",
+    recent:"Recent Projects",
+    pt:"My Projects", ps:"Search projects…", dl:"Download",
+    lt:"Learning Center", ls:"Search articles…",
+    lc:[
+      {i:"ti-rocket",t:"Getting Started",d:"Set up your first project in 5 minutes and generate viral clips instantly"},
+      {i:"ti-video",t:"Video Tutorials",d:"Step-by-step walkthroughs for every feature in the platform"},
+      {i:"ti-bulb",t:"Tips & Tricks",d:"Pro techniques to consistently achieve higher virality scores"},
+      {i:"ti-help-circle",t:"FAQ",d:"Answers to the most frequently asked questions about our platform"},
+    ],
+    pa:"Popular Articles",
+    arts:["How to maximize your virality score","Best content styles for TikTok in 2025","Understanding AI-powered clip detection","Export settings for Instagram Reels & Shorts","Batch processing multiple videos","Using the API for automated workflows"],
+    prT:"Simple, transparent pricing", prS:"Start free. Upgrade when you need more clips.",
+    plans:[
+      {n:"Free",p:"$0",per:"forever",tag:"",pop:false,f:["1 clip / day","720p export","Watermark","Basic styles","Community support"],c:"Get Started Free"},
+      {n:"Starter",p:"Rp 29K",per:"/month",tag:"Most Popular",pop:true,f:["50 clips / month","1080p export","No watermark","All styles","Priority support"],c:"Start Free Trial"},
+      {n:"Pro",p:"Rp 79K",per:"/month",tag:"Best Value",pop:false,f:["200 clips / month","4K export","No watermark","API access","Dedicated manager"],c:"Go Pro"},
+    ],
+    stg:"Settings", acct:"Account", bill:"Billing", cred:"Credits", api:"API Key",
+    logout:"Sign Out", lang:"Language", plan:"Current Plan",
+    nocred:"0 credits", creds:"credits available",
+    err:"Something went wrong", try:"Try again",
+  },
+  id: {
+    app:"Video Summerizer", tag:"Pabrik Klip Viral AI",
+    nav:["Beranda","Proyek Saya","Pusat Belajar","Harga","Pengaturan"],
+    bnav:["Beranda","Proyek","Baru","Statistik","Akun"],
+    heroT:"Hasilkan 10 Klip Viral Hari Ini",
+    heroS:"Tempel link YouTube atau unggah video Anda — AI mendeteksi momen terbaik dan membuat klip siap-TikTok secara instan.",
+    urlPH:"Tempel URL YouTube, TikTok, atau Instagram…",
+    or:"— atau —",
+    dropT:"Letakkan video di sini atau klik untuk unggah",
+    dropS:"MP4, MOV, AVI hingga 2GB",
+    style:"Gaya Konten",
+    styles:["🎙 Podcast","🎮 Game","📸 Vlog","✨ Otomatis"],
+    gen:"🔥 Buat 10 Klip",
+    recent:"Proyek Terbaru",
+    pt:"Proyek Saya", ps:"Cari proyek…", dl:"Unduh",
+    lt:"Pusat Belajar", ls:"Cari artikel…",
+    lc:[
+      {i:"ti-rocket",t:"Panduan Awal",d:"Siapkan proyek pertama Anda dalam 5 menit"},
+      {i:"ti-video",t:"Tutorial Video",d:"Panduan langkah demi langkah untuk setiap fitur"},
+      {i:"ti-bulb",t:"Tips & Trik",d:"Teknik pro untuk skor viral yang lebih tinggi"},
+      {i:"ti-help-circle",t:"FAQ",d:"Jawaban untuk pertanyaan yang sering diajukan"},
+    ],
+    pa:"Artikel Populer",
+    arts:["Cara memaksimalkan skor viral Anda","Gaya konten terbaik untuk TikTok 2025","Memahami deteksi klip AI","Pengaturan ekspor untuk Reels & Shorts","Proses batch beberapa video","Menggunakan API untuk alur kerja otomatis"],
+    prT:"Harga sederhana, transparan", prS:"Mulai gratis. Tingkatkan saat Anda butuh lebih banyak.",
+    plans:[
+      {n:"Gratis",p:"$0",per:"selamanya",tag:"",pop:false,f:["1 klip / hari","Ekspor 720p","Watermark","Gaya dasar","Dukungan komunitas"],c:"Mulai Gratis"},
+      {n:"Starter",p:"Rp 29K",per:"/bulan",tag:"Terpopuler",pop:true,f:["50 klip / bulan","Ekspor 1080p","Tanpa watermark","Semua gaya","Dukungan prioritas"],c:"Coba Gratis"},
+      {n:"Pro",p:"Rp 79K",per:"/bulan",tag:"Terbaik",pop:false,f:["200 klip / bulan","Ekspor 4K","Tanpa watermark","Akses API","Manajer khusus"],c:"Langganan Pro"},
+    ],
+    stg:"Pengaturan", acct:"Akun", bill:"Tagihan", cred:"Kredit", api:"Kunci API",
+    logout:"Keluar", lang:"Bahasa", plan:"Paket Saat Ini",
+    nocred:"0 kredit", creds:"kredit tersedia",
+    err:"Terjadi kesalahan", try:"Coba lagi",
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════
+let page = window.location.hash.slice(1) || 'home';
+let lang = localStorage.getItem('vs_lang') || 'en';
+let t = L[lang];
+let user = JSON.parse(localStorage.getItem('vs_user') || 'null');
+let token = localStorage.getItem('vs_token');
+let jobs = [];
+let projects = [];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// API
+// ═══════════════════════════════════════════════════════════════════════════
+async function api(path, opts = {}) {
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(path, { ...opts, headers });
+    if (res.status === 401) { token = null; localStorage.removeItem('vs_token'); user = null; render(); throw new Error('Unauthorized'); }
+    return await res.json();
+  } catch(e) { if (opts._silent) return null; throw e; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════════════════
+function render() {
+  t = L[lang];
+  const root = document.getElementById('app');
+  root.innerHTML = `
+    ${user ? renderSidebar() : ''}
+    <div class="vs-main">
+      ${user ? renderTopBar() : renderGuestTop()}
+      <div class="vs-content">
+        ${user ? renderPage() : renderGuestPage()}
+      </div>
+    </div>
+    ${user ? renderBNav() : ''}
+  `;
+  // Restore page state
+  document.querySelectorAll('.side-item, .bnav-item').forEach(el => {
+    if (el.dataset.page === page) el.classList.add('active');
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════════════════════════════════════════════════
+function renderSidebar() {
+  return `<div class="vs-sidebar">
+    <div class="side-logo">🎬 <span>Video</span> Summerizer</div>
+    ${t.nav.map((n,i)=>`
+      <div class="side-item ${page===['home','projects','learn','pricing','settings'][i]?'active':''}"
+           data-page="${['home','projects','learn','pricing','settings'][i]}"
+           onclick="navigate('${['home','projects','learn','pricing','settings'][i]}')">
+        <i class="ti ${['ti-home-2','ti-layout-grid','ti-book-2','ti-tag','ti-settings'][i]}"></i>
+        ${n}
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TOP BAR
+// ═══════════════════════════════════════════════════════════════════════════
+function renderTopBar() {
+  return `<div class="vs-top">
+    <div style="font-weight:600;font-size:15px">${page==='home'?t.heroT:''}</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <select onchange="setLang(this.value)" style="border:1px solid var(--B);border-radius:8px;padding:6px 10px;font-size:12px;background:var(--W)">
+        <option value="en" ${lang==='en'?'selected':''}>🇬🇧 EN</option>
+        <option value="id" ${lang==='id'?'selected':''}>🇮🇩 ID</option>
+      </select>
+      ${user?`<span style="font-size:12px;color:var(--TM);background:var(--PL);padding:4px 10px;border-radius:100px">⚡ ${user.credits||0}</span>`:''}
+    </div>
+  </div>`;
+}
+
+function renderGuestTop() {
+  return `<div class="vs-top">
+    <div style="font-weight:700;font-size:16px">🎬 Video Summerizer</div>
+    <select onchange="setLang(this.value)" style="border:1px solid var(--B);border-radius:8px;padding:6px 10px;font-size:12px;background:var(--W)">
+      <option value="en" ${lang==='en'?'selected':''}>🇬🇧 EN</option>
+      <option value="id" ${lang==='id'?'selected':''}>🇮🇩 ID</option>
+    </select>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BOTTOM NAV
+// ═══════════════════════════════════════════════════════════════════════════
+function renderBNav() {
+  const icons = ['ti-home','ti-layout-grid','ti-plus','ti-chart-bar','ti-user'];
+  const pages = ['home','projects','home','home','settings'];
+  return `<div class="bnav">
+    ${pages.map((p,i) => `
+      <button class="bnav-item ${page===pages[i]?'active':''} ${i===2?'new':''}"
+          onclick="${i===2?`navigate('home')`:''}">
+        ${i===2
+          ? `<div class="bnav-new"><i class="ti ti-plus" style="font-size:22px;color:#fff"></i></div>`
+          : `<><i class="ti ${icons[i]}" style="font-size:20px"></i><span>${t.bnav[i]}</span></>`
+        }
+      </button>
+    `).join('')}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════════
+function navigate(p) { page = p; window.location.hash = p; render(); }
+function setLang(l) { lang = l; localStorage.setItem('vs_lang', l); render(); }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GUEST PAGE (no login required — try the product first)
+// ═══════════════════════════════════════════════════════════════════════════
+function renderGuestPage() {
+  return `
+    <div style="max-width:640px;margin:0 auto">
+      <div style="text-align:center;margin-bottom:32px">
+        <div style="font-size:32px;font-weight:800;margin-bottom:8px">${t.heroT}</div>
+        <div style="color:var(--TM);font-size:15px">${t.heroS}</div>
+      </div>
+      ${renderClipForm()}
+      ${renderGuestResults()}
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PAGE ROUTER
+// ═══════════════════════════════════════════════════════════════════════════
+function renderPage() {
+  switch(page) {
+    case 'home': return renderHome();
+    case 'projects': return renderProjects();
+    case 'learn': return renderLearn();
+    case 'pricing': return renderPricing();
+    case 'settings': return renderSettings();
+    default: return renderHome();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════════════════════════════════════════
+function renderHome() {
+  return `
+    <div style="max-width:720px;margin:0 auto">
+      ${renderClipForm()}
+      ${user && projects.length > 0 ? `
+        <div style="margin-top:32px">
+          <div style="font-size:16px;font-weight:700;margin-bottom:12px">${t.recent}</div>
+          <div class="grid-2">
+            ${projects.slice(0,4).map(p => renderProjectCard(p)).join('')}
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CLIP FORM
+// ═══════════════════════════════════════════════════════════════════════════
+let analyzing = false;
+function renderClipForm() {
+  return `
+    <div class="card" style="padding:24px">
+      <div class="split" style="margin-bottom:12px">
+        <div class="card" style="padding:16px;text-align:center;cursor:pointer" onclick="document.getElementById('urlInput').focus()">
+          <i class="ti ti-link" style="font-size:24px;color:var(--P)"></div>
+          <div style="font-size:13px;font-weight:600;margin-top:6px">${t.urlPH?.includes('Paste')?'Paste Link':'Tempel Link'}</div>
+          <div style="font-size:11px;color:var(--TL)">YouTube · TikTok</div>
+        </div>
+        <div class="card" style="padding:16px;text-align:center;cursor:pointer;border:2px dashed var(--B)">
+          <i class="ti ti-upload" style="font-size:24px;color:var(--P)"></i>
+          <div style="font-size:13px;font-weight:600;margin-top:6px">Upload Video</div>
+          <div style="font-size:11px;color:var(--TL)">MP4, MOV, AVI</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input id="urlInput" class="input" placeholder="${t.urlPH}" value="${currentUrl||''}"/>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+        ${t.styles.map((s,i) => `
+          <div class="pill ${i===currentStyle?'active':''}" onclick="selectStyle(${i})">${s}</div>
+        `).join('')}
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="analyzeClip()" ${analyzing?'disabled':''}>
+        ${analyzing ? '⏳ Processing...' : t.gen}
+      </button>
+      <div id="progressArea" style="display:none;margin-top:12px">
+        <div style="height:4px;background:var(--B);border-radius:2px;overflow:hidden">
+          <div id="progBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--P),var(--PD));border-radius:2px;transition:width .3s"></div>
+        </div>
+        <div id="progText" style="font-size:12px;color:var(--TM);margin-top:6px;text-align:center">${t.err}</div>
+      </div>
+      <div id="resultsArea"></div>
+      <div id="guestPrompt" style="margin-top:16px;text-align:center;display:none">
+        <button class="btn btn-outline" onclick="showAuth()">${t.err}</button>
+      </div>
+    </div>
+  `;
+}
+
+let currentUrl = '';
+let currentStyle = 3;
+function selectStyle(i) { currentStyle = i; render(); }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ANALYZE
+// ═══════════════════════════════════════════════════════════════════════════
+async function analyzeClip() {
+  const urlInput = document.getElementById('urlInput');
+  currentUrl = urlInput?.value || '';
+  if (!currentUrl) return;
+
+  analyzing = true;
+  document.getElementById('progressArea').style.display = 'block';
+  const bar = document.getElementById('progBar');
+  const txt = document.getElementById('progText');
+  const results = document.getElementById('resultsArea');
+  results.innerHTML = '';
+  bar.style.width = '10%';
+  txt.textContent = 'Analyzing video...';
+
+  try {
+    const data = await api('/api/analyze', {
+      method: 'POST',
+      body: JSON.stringify({ url: currentUrl }),
+    });
+    bar.style.width = '50%';
+    txt.textContent = 'AI detecting viral moments...';
+
+    // Poll for results
+    let job;
+    for (let i = 0; i < 30; i++) {
+      await sleep(2000);
+      job = await api(`/api/job/${data.jobId}`, { _silent: true });
+      if (!job) continue;
+      if (job.status === 'done' || job.status === 'error') break;
+    }
+
+    bar.style.width = '100%';
+    txt.textContent = 'Done!';
+
+    if (!job || job.status === 'error') throw new Error(job?.error || 'Processing failed');
+
+    // Show results
+    results.innerHTML = `
+      <div style="margin-top:16px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px">${job.clips?.length || 0} clips found</div>
+        <div class="grid-2">
+          ${(job.clips || []).slice(0,6).map(c => renderClipCard(c)).join('')}
+        </div>
+        ${!token ? `
+          <div style="margin-top:16px;padding:16px;background:var(--PL);border-radius:12px;text-align:center">
+            <div style="font-size:14px;font-weight:600;margin-bottom:8px">Sign up to download your clips</div>
+            <button class="btn btn-primary" onclick="showAuth()">Sign Up Free</button>
+          </div>
+        ` : `
+          <div style="margin-top:16px;display:flex;gap:8px">
+            <button class="btn btn-primary" onclick="alert('Premium feature — coming soon')">Download Selected</button>
+            <button class="btn btn-outline" onclick="alert('Premium feature — coming soon')">Download All</button>
+          </div>
+        `}
+      </div>
+    `;
+  } catch(e) {
+    txt.textContent = e.message;
+    results.innerHTML = `<div style="color:#EF4444;font-size:13px;margin-top:8px">${e.message}</div>`;
+  }
+  analyzing = false;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CLIP CARD
+// ═══════════════════════════════════════════════════════════════════════════
+function renderClipCard(c) {
+  const level = c.total_score >= 80 ? 'high' : c.total_score >= 60 ? 'med' : 'low';
+  return `
+    <div class="card" style="padding:12px;cursor:pointer">
+      <div style="height:80px;background:var(--PL);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;font-size:28px">🎬</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:12px;font-weight:600;color:var(--T)">${c.suggested_title || c.hook_text || 'Clip'}</div>
+        <span class="badge badge-${level}">${c.total_score || 0}%</span>
+      </div>
+      <div style="font-size:11px;color:var(--TM);margin-top:4px">${Math.round(c.duration)}s · ${t.dl}</div>
+    </div>
+  `;
+}
+
+function renderProjectCard(p) {
+  return `
+    <div class="card" style="padding:12px;cursor:pointer">
+      <div style="font-size:13px;font-weight:600">${p.video_title || 'Untitled'}</div>
+      <div style="font-size:11px;color:var(--TM);margin-top:4px">${p.clips?.length || 0} clips</div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GUEST RESULTS
+// ═══════════════════════════════════════════════════════════════════════════
+function renderGuestResults() {
+  const r = document.getElementById('resultsArea');
+  if (r && r.innerHTML) return '';
+  return `<div style="margin-top:24px;text-align:center;padding:40px 0;color:var(--TL)">
+    <i class="ti ti-video" style="font-size:48px"></i>
+    <div style="margin-top:12px">${t.heroS}</div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AUTH MODAL
+// ═══════════════════════════════════════════════════════════════════════════
+function showAuth() {
+  const overlay = document.createElement('div');
+  overlay.id = 'authOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(6,6,14,.92);backdrop-filter:blur(12px)';
+  overlay.innerHTML = `
+    <div style="background:var(--W);border-radius:16px;padding:32px;width:360px;max-width:92vw;box-shadow:0 0 80px rgba(0,170,19,.15)">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:22px;font-weight:800">🎬 Video <span style="color:var(--P)">Summerizer</span></div>
+        <div style="font-size:13px;color:var(--TM);margin-top:4px">${t.app}</div>
+      </div>
+      <div style="display:flex;gap:4px;margin-bottom:16px;background:var(--BG);border-radius:8px;padding:4px">
+        <button id="authLoginBtn" onclick="switchAuthTab('login')" style="flex:1;padding:8px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;background:var(--P);color:#fff">Sign In</button>
+        <button id="authRegBtn" onclick="switchAuthTab('register')" style="flex:1;padding:8px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;background:transparent;color:var(--TM)">Sign Up</button>
+      </div>
+      <div id="authFormLogin">
+        <input id="loginEmail" class="input" placeholder="Email" style="margin-bottom:10px"/>
+        <input id="loginPass" class="input" type="password" placeholder="Password" style="margin-bottom:16px"/>
+        <button class="btn btn-primary" style="width:100%" onclick="login()">Sign In</button>
+        <div id="loginError" style="color:#EF4444;font-size:12px;margin-top:8px;display:none"></div>
+      </div>
+      <div id="authFormReg" style="display:none">
+        <input id="regEmail" class="input" placeholder="Email" style="margin-bottom:10px"/>
+        <input id="regPass" class="input" type="password" placeholder="Password (min 6 chars)" style="margin-bottom:10px"/>
+        <div style="font-size:11px;color:var(--TM);background:var(--PL);border-radius:8px;padding:10px;margin-bottom:16px">🎁 Free 3 clips on signup — no credit card needed</div>
+        <button class="btn btn-primary" style="width:100%" onclick="register()">Create Account</button>
+        <div id="regError" style="color:#EF4444;font-size:12px;margin-top:8px;display:none"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function switchAuthTab(tab) {
+  document.getElementById('authFormLogin').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('authFormReg').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('authLoginBtn').style.background = tab === 'login' ? 'var(--P)' : 'transparent';
+  document.getElementById('authLoginBtn').style.color = tab === 'login' ? '#fff' : 'var(--TM)';
+  document.getElementById('authRegBtn').style.background = tab === 'register' ? 'var(--P)' : 'transparent';
+  document.getElementById('authRegBtn').style.color = tab === 'register' ? '#fff' : 'var(--TM)';
+}
+
+async function login() {
+  const e = document.getElementById('loginEmail').value;
+  const p = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginError');
+  try {
+    const res = await api('/api/auth/login', { method:'POST', body:JSON.stringify({email:e,password:p}) });
+    token = res.token; user = res.user;
+    localStorage.setItem('vs_token', token);
+    localStorage.setItem('vs_user', JSON.stringify(user));
+    document.getElementById('authOverlay')?.remove();
+    render();
+  } catch(e) { err.textContent = e.message; err.style.display = 'block'; }
+}
+
+async function register() {
+  const e = document.getElementById('regEmail').value;
+  const p = document.getElementById('regPass').value;
+  const err = document.getElementById('regError');
+  try {
+    const res = await api('/api/auth/register', { method:'POST', body:JSON.stringify({email:e,password:p}) });
+    token = res.token; user = res.user;
+    localStorage.setItem('vs_token', token);
+    localStorage.setItem('vs_user', JSON.stringify(user));
+    document.getElementById('authOverlay')?.remove();
+    render();
+  } catch(e) { err.textContent = e.message; err.style.display = 'block'; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PROJECTS PAGE
+// ═══════════════════════════════════════════════════════════════════════════
+function renderProjects() {
+  return `
+    <div style="max-width:800px;margin:0 auto">
+      <div style="font-size:18px;font-weight:700;margin-bottom:16px">${t.pt}</div>
+      <input class="input" placeholder="${t.ps}" style="margin-bottom:16px"/>
+      <div class="grid-3">
+        ${[1,2,3,4,5,6].map(() => `
+          <div class="card" style="padding:12px">
+            <div style="height:80px;background:var(--PL);border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:24px">🎬</div>
+            <div style="font-size:12px;font-weight:600;color:var(--TM)">Recent project</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LEARNING PAGE
+// ═══════════════════════════════════════════════════════════════════════════
+function renderLearn() {
+  return `
+    <div style="max-width:800px;margin:0 auto">
+      <div style="font-size:18px;font-weight:700;margin-bottom:4px">${t.lt}</div>
+      <div class="grid-2" style="margin-top:16px">
+        ${t.lc.map(c => `
+          <div class="card" style="cursor:pointer">
+            <i class="ti ${c.i}" style="font-size:32px;color:var(--P)"></i>
+            <div style="font-size:15px;font-weight:600;margin:8px 0 4px">${c.t}</div>
+            <div style="font-size:13px;color:var(--TM)">${c.d}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="margin-top:24px">
+        <input class="input" placeholder="${t.ls}" style="margin-bottom:16px"/>
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px">${t.pa}</div>
+        ${t.arts.map(a => `
+          <div style="padding:10px 0;border-bottom:1px solid var(--B);font-size:13px;cursor:pointer;color:var(--TM)">
+            <i class="ti ti-article" style="margin-right:6px;color:var(--P)"></i>${a}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PRICING PAGE
+// ═══════════════════════════════════════════════════════════════════════════
+function renderPricing() {
+  return `
+    <div style="max-width:900px;margin:0 auto">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:22px;font-weight:800">${t.prT}</div>
+        <div style="font-size:14px;color:var(--TM)">${t.prS}</div>
+      </div>
+      <div class="grid-3">
+        ${t.plans.map(p => `
+          <div class="card" style="text-align:center;padding:24px;${p.pop?'border-color:var(--P);box-shadow:0 0 20px rgba(0,170,19,.12)':''}">
+            ${p.tag ? `<div style="display:inline-block;background:var(--P);color:#fff;font-size:11px;font-weight:700;padding:3px 12px;border-radius:100px;margin-bottom:12px">${p.tag}</div>` : ''}
+            <div style="font-size:14px;font-weight:600;color:var(--TM)">${p.n}</div>
+            <div style="font-size:28px;font-weight:800;margin:8px 0 2px">${p.p}</div>
+            <div style="font-size:12px;color:var(--TL);margin-bottom:12px">${p.per}</div>
+            ${p.f.map(f => `<div style="font-size:13px;padding:6px 0;border-top:1px solid var(--B)">✅ ${f}</div>`).join('')}
+            <button class="btn ${p.pop?'btn-primary':'btn-outline'}" style="width:100%;margin-top:16px">${p.c}</button>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SETTINGS PAGE
+// ═══════════════════════════════════════════════════════════════════════════
+function renderSettings() {
+  return `
+    <div style="max-width:600px;margin:0 auto">
+      <div style="font-size:18px;font-weight:700;margin-bottom:16px">${t.stg}</div>
+      <div class="card" style="margin-bottom:12px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px">👤 ${t.acct}</div>
+        <div style="font-size:13px;color:var(--TM);margin-bottom:4px">${user?.email || ''}</div>
+      </div>
+      <div class="card" style="margin-bottom:12px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px">💳 ${t.bill}</div>
+        <div style="font-size:13px;color:var(--TM)">${t.plan}: ${user?.plan || 'free'}</div>
+        <div style="font-size:13px;color:var(--TM)">⚡ ${user?.credits || 0} ${t.creds}</div>
+      </div>
+      <div class="card" style="margin-bottom:12px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px">🔑 ${t.api}</div>
+        <div style="font-size:12px;color:var(--TM)">${t.err}</div>
+      </div>
+      <button class="btn btn-outline" style="width:100%;margin-top:16px;color:#EF4444;border-color:#EF4444;border-width:1.5px" onclick="logout()">🚪 ${t.logout}</button>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════════════════════════
+function logout() {
+  token = null; user = null;
+  localStorage.removeItem('vs_token');
+  localStorage.removeItem('vs_user');
+  page = 'home';
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════
+if (token) { render(); } else { render(); }
+</script>
+</body>
+</html>
