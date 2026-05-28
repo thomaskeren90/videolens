@@ -1,0 +1,24 @@
+# Video Summerizer — AI Viral Clip Factory 🎬
+# Deploy on Render: https://render.com
+
+services:
+  - type: web
+    name: video-summerizer
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: cd api && npm install
+    startCommand: node api/server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: OPENCODE_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: MIDTRANS_SERVER_KEY
+        sync: false
+      - key: MIDTRANS_CLIENT_KEY
+        sync: false
+      - key: PORT
+        value: "3030"
