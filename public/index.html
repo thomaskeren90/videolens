@@ -96,8 +96,10 @@ body{background:var(--BG);color:var(--T);min-height:100vh;display:flex}
   <div class="side-user" id="side-user" onclick="showAuth()"><div class="side-avatar" id="side-avatar">?</div><div><div class="side-uname" id="side-name">Not logged in</div><div style="font-size:11px;color:var(--TM)" id="side-plan">Free plan</div></div></div>
   <div class="side-nav">
     <div class="side-item active" onclick="go('home')"><i class="ti ti-home"></i>Home</div>
-    <div class="side-item" onclick="go('pricing')"><i class="ti ti-coin"></i>Pricing</div>
+    <div class="side-item" onclick="go('stats')"><i class="ti ti-chart-bar"></i>Stats</div>
     <div class="side-item" onclick="go('history')"><i class="ti ti-history"></i>History</div>
+    <div class="side-item" onclick="go('pricing')"><i class="ti ti-coin"></i>Pricing</div>
+    <div class="side-item" onclick="go('settings')"><i class="ti ti-settings"></i>Settings</div>
   </div>
   <div class="side-credits">
     <div style="display:flex;justify-content:space-between"><span>Credits</span><span style="color:var(--P);font-weight:700"><span id="credits-used">0</span> / <span id="credits-limit">3</span></span></div>
@@ -151,6 +153,31 @@ body{background:var(--BG);color:var(--T);min-height:100vh;display:flex}
 <div id="page-history" class="page">
   <h2 style="font-size:22px;font-weight:700;margin-bottom:16px"><i class="ti ti-history" style="color:var(--P)"></i> History</h2>
   <div id="history-list"><p style="color:var(--TM)">Log in to see your clip history.</p></div>
+</div>
+
+<div id="page-stats" class="page">
+  <h2 style="font-size:22px;font-weight:700;margin-bottom:16px"><i class="ti ti-chart-bar" style="color:var(--P)"></i> Stats</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+    <div style="background:var(--W);border:1px solid var(--B);border-radius:14px;padding:24px"><div style="font-size:12px;color:var(--TM);margin-bottom:4px">Clips Generated</div><div style="font-size:32px;font-weight:800" id="stat-total">0</div></div>
+    <div style="background:var(--W);border:1px solid var(--B);border-radius:14px;padding:24px"><div style="font-size:12px;color:var(--TM);margin-bottom:4px">Credits Used</div><div style="font-size:32px;font-weight:800" id="stat-credits">0</div></div>
+    <div style="background:var(--W);border:1px solid var(--B);border-radius:14px;padding:24px"><div style="font-size:12px;color:var(--TM);margin-bottom:4px">Plan</div><div style="font-size:32px;font-weight:800" id="stat-plan">Free</div></div>
+    <div style="background:var(--W);border:1px solid var(--B);border-radius:14px;padding:24px"><div style="font-size:12px;color:var(--TM);margin-bottom:4px">Remaining</div><div style="font-size:32px;font-weight:800" id="stat-remain">0</div></div>
+  </div>
+</div>
+
+<div id="page-settings" class="page">
+  <h2 style="font-size:22px;font-weight:700;margin-bottom:16px"><i class="ti ti-settings" style="color:var(--P)"></i> Settings</h2>
+  <div style="background:var(--W);border:1px solid var(--B);border-radius:14px;overflow:hidden;margin-bottom:12px">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--B);font-weight:600">Account</div>
+    <div style="padding:12px 16px;font-size:13px" id="settings-info">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--TM)">Email</span><span id="set-email">—</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--TM)">Name</span><span id="set-name">—</span></div>
+    </div>
+  </div>
+  <div style="background:var(--W);border:1px solid var(--B);border-radius:14px;overflow:hidden">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--B);font-weight:600">Billing</div>
+    <div style="padding:12px 16px;font-size:13px" id="settings-plan">Plan: Free</div>
+  </div>
 </div>
 
 </div><!-- main -->
@@ -547,6 +574,19 @@ async function loadHistory() {
   } catch(e) { document.getElementById('history-list').innerHTML = '<p style="color:var(--TM)">Failed to load history.</p>'; }
 }
 
+function updateStatsAndSettings() {
+  var used = user ? (user.clips_used || 0) : 0;
+  var limit = user ? (user.plan === 'free' ? 3 : user.plan === 'starter' ? 50 : user.plan === 'pro' ? 200 : 999) : 3;
+  var plan = user ? (user.plan || 'free') : 'free';
+  document.getElementById('stat-total').textContent = user ? (user.total_processed || 0) : '—';
+  document.getElementById('stat-credits').textContent = used;
+  document.getElementById('stat-plan').textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+  document.getElementById('stat-remain').textContent = Math.max(0, limit - used);
+  document.getElementById('set-email').textContent = user ? (user.email || '—') : '—';
+  document.getElementById('set-name').textContent = user ? (user.name || '—') : '—';
+  document.getElementById('settings-plan').textContent = 'Plan: ' + (plan.charAt(0).toUpperCase() + plan.slice(1));
+}
+
 // ─── NAVIGATION ──────────────────────────────────────────────────────────────
 function go(page) {
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
@@ -558,6 +598,7 @@ function go(page) {
   document.getElementById('ptitle').textContent = page.charAt(0).toUpperCase() + page.slice(1);
 
   if (page === 'history') loadHistory();
+  if (page === 'stats' || page === 'settings') updateStatsAndSettings();
 }
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
