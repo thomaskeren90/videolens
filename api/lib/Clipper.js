@@ -9,8 +9,25 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
 const execAsync = promisify(exec);
-const YTDLP = process.env.YTDLP_PATH || 'yt-dlp';
-const FFMPEG = process.env.FFMPEG_PATH || 'ffmpeg';
+
+// Find ffmpeg & yt-dlp — check env vars, then project bin/, then system PATH
+function findBin(name) {
+  // Check env override first
+  const envKey = name === 'ffmpeg' ? 'FFMPEG_PATH' : 'YTDLP_PATH';
+  if (process.env[envKey] && fs.existsSync(process.env[envKey])) return process.env[envKey];
+  // Check project bin/ directory
+  const localPath = path.join(__dirname, '..', '..', 'bin', name);
+  if (fs.existsSync(localPath)) return localPath;
+  // Fall back to system PATH
+  return name;
+}
+
+const YTDLP = findBin('yt-dlp');
+const FFMPEG = findBin('ffmpeg');
+
+console.log('[Clipper] YTDLP:', YTDLP);
+console.log('[Clipper] FFMPEG:', FFMPEG);
+
 const CLIPS_DIR = process.env.CLIPS_DIR || path.join(__dirname, '..', 'clips');
 const TMP_DIR = process.env.TMP_DIR || path.join(__dirname, '..', 'tmp');
 
