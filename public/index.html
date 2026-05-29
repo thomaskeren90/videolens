@@ -2,245 +2,297 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>KlikClip — AI Viral Clip Factory</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css" rel="stylesheet"/>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',-apple-system,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif}
 :root{--P:#00AA13;--PD:#008A0E;--PL:#E6F7E8;--BG:#F5F7FA;--W:#fff;--T:#1F2937;--TM:#6B7280;--TL:#9CA3AF;--B:#E5E7EB}
-body{background:var(--BG);color:var(--T);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.container{max-width:480px;width:100%;background:var(--W);border-radius:24px;box-shadow:0 8px 32px rgba(0,0,0,0.08);overflow:hidden}
-.top-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--B)}
-.logo{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:800;color:var(--T)}
-.logo-icon{width:30px;height:30px;border-radius:8px;background:linear-gradient(145deg,#00C416,#00690C);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,170,19,0.3)}
-.badge{height:28px;padding:0 10px;border-radius:100px;background:var(--PL);display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--P)}
-.hero{padding:32px 20px 24px;background:linear-gradient(160deg,#F0FFF2,#fff);text-align:center}
-.hero h1{font-size:24px;font-weight:800;color:var(--T);margin-bottom:6px}
-.hero p{font-size:14px;color:var(--TM);margin-bottom:20px}
-.input-group{display:flex;align-items:center;gap:8px;background:var(--W);border:2px solid var(--B);border-radius:12px;padding:0 14px;height:48px;margin-bottom:10px;transition:.2s}
-.input-group.error{border-color:#EF4444;box-shadow:0 0 0 3px rgba(239,68,68,0.12)}
+body{background:var(--BG);color:var(--T);min-height:100vh;display:flex}
+
+/* ---- SIDEBAR (desktop) ---- */
+.sidebar{width:240px;background:var(--W);border-right:1px solid var(--B);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50}
+.side-logo{display:flex;align-items:center;gap:8px;padding:20px 20px 16px;font-size:18px;font-weight:800;color:var(--T);border-bottom:1px solid var(--B)}
+.side-logo .icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(145deg,#00C416,#00690C);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,170,19,0.3)}
+.side-user{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--B);cursor:pointer}
+.side-avatar{width:32px;height:32px;border-radius:8px;background:var(--P);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.side-uname{font-size:13px;font-weight:600}
+.side-uplan{font-size:11px;color:var(--TM)}
+.side-nav{flex:1;padding:8px 8px;overflow-y:auto}
+.side-item{display:flex;align-items:center;gap:10px;padding:10px 12px;font-size:13px;font-weight:500;color:var(--T);cursor:pointer;border-radius:10px;transition:.15s;margin-bottom:2px}
+.side-item:hover{background:var(--PL)}
+.side-item.active{background:var(--PL);color:var(--P);font-weight:700;border-left:3px solid var(--P);border-radius:10px 0 0 10px;margin-left:-8px;padding-left:17px}
+.side-item i{font-size:18px;width:20px;text-align:center}
+.side-item .badge{font-size:10px;padding:1px 7px;border-radius:4px;background:var(--PL);color:var(--P);margin-left:auto;font-weight:700}
+.side-credits{padding:12px 16px;border-top:1px solid var(--B);font-size:12px}
+.side-credits .bar{height:6px;background:var(--B);border-radius:100px;margin-top:6px;overflow:hidden}
+.side-credits .bar-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#00C416,#00AA13);width:90%}
+
+/* ---- MAIN CONTENT ---- */
+.main{margin-left:240px;flex:1;min-height:100vh;display:flex;flex-direction:column}
+.top-bar{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:var(--W);border-bottom:1px solid var(--B)}
+.top-bar h2{font-size:18px;font-weight:700;color:var(--T)}
+.top-bar .actions{display:flex;align-items:center;gap:10px}
+.lang-btn{height:30px;padding:0 10px;border-radius:100px;border:1.5px solid var(--B);background:var(--W);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px}
+.credit-badge{height:30px;padding:0 10px;border-radius:100px;background:var(--PL);display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--P)}
+
+.content{padding:32px;max-width:900px;width:100%;margin:0 auto}
+
+.hero-box{background:linear-gradient(160deg,#F0FFF2,#fff);border-radius:20px;padding:32px;border:1px solid var(--B);margin-bottom:24px}
+.hero-box h1{font-size:28px;font-weight:800;color:var(--T);margin-bottom:6px;line-height:1.2}
+.hero-box p{font-size:15px;color:var(--TM);margin-bottom:24px}
+.input-group{display:flex;align-items:center;gap:8px;background:var(--W);border:2px solid var(--B);border-radius:12px;padding:0 16px;height:52px;max-width:600px;transition:.2s}
+.input-group:focus-within{border-color:var(--P);box-shadow:0 0 0 3px rgba(0,170,19,0.1)}
 .input-group input{flex:1;border:none;outline:none;font-size:14px;color:var(--T);background:transparent}
-.or-divider{display:flex;align-items:center;gap:12px;margin:10px 0;font-size:12px;color:var(--TL)}
-.or-divider hr{flex:1;border:none;border-top:1px solid var(--B)}
-.upload-zone{border:2px dashed var(--B);border-radius:12px;padding:20px;text-align:center;margin-bottom:14px;cursor:pointer;transition:.2s}
-.upload-zone:hover,.upload-zone.dragover{border-color:var(--P);background:var(--PL)}
-.upload-zone i{font-size:24px;color:var(--TL);margin-bottom:6px}
-.upload-zone p{font-size:13px;color:var(--TM)}
-.style-pills{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
-.pill{height:34px;padding:0 14px;border-radius:100px;border:2px solid var(--B);background:var(--W);font-size:12px;font-weight:600;color:var(--TM);cursor:pointer;transition:.2s}
+.or-text{font-size:12px;color:var(--TL);margin:12px 0}
+.pills{display:flex;gap:8px;margin:16px 0;flex-wrap:wrap}
+.pill{height:36px;padding:0 16px;border-radius:100px;border:2px solid var(--B);background:var(--W);font-size:13px;font-weight:600;color:var(--TM);cursor:pointer;transition:.2s}
 .pill.active{border-color:var(--P);background:var(--PL);color:var(--P)}
-.select-row{display:flex;gap:12px;margin-bottom:16px}
-.select-row select{flex:1;height:44px;border:2px solid var(--B);border-radius:10px;padding:0 12px;font-size:13px;color:var(--T);background:var(--W)}
-.btn-gen{width:100%;height:50px;border-radius:100px;border:none;background:linear-gradient(180deg,#00C416,#00AA13);color:#fff;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(0,170,19,0.35);margin-bottom:8px;transition:.2s}
-.btn-gen:hover{transform:translateY(-1px)}
-.btn-gen:disabled{opacity:.7;cursor:not-allowed;transform:none}
-.btn-dl{width:100%;height:32px;border-radius:100px;border:none;background:linear-gradient(180deg,#00C416,#00AA13);color:#fff;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 3px 10px rgba(0,170,19,0.25)}
-.error-msg{color:#EF4444;font-size:12px;margin:4px 0 0 4px;display:none}
-.progress-wrap{background:var(--BG);border-radius:12px;padding:12px 16px;margin-bottom:12px;text-align:center}
-.progress-bar{width:100%;height:8px;background:var(--B);border-radius:100px;overflow:hidden;margin:8px 0}
-.progress-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#00C416,#00AA13);transition:width .4s}
-.progress-text{font-size:13px;color:var(--P);font-weight:600}
-.clips-section{padding:0 20px 20px}
-.clips-section h3{font-size:15px;font-weight:700;margin-bottom:12px}
-.clips-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.clip-card{background:var(--W);border:1px solid var(--B);border-radius:16px;overflow:hidden;transition:.2s}
+.selects{display:flex;gap:12px;margin-bottom:20px;max-width:400px}
+.selects select{flex:1;height:44px;border:2px solid var(--B);border-radius:10px;padding:0 12px;font-size:13px;color:var(--T);background:var(--W)}
+.btn-primary{height:52px;padding:0 40px;border-radius:100px;border:none;background:linear-gradient(180deg,#00C416,#00AA13);color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(0,170,19,0.35);transition:.2s;display:inline-flex;align-items:center;gap:8px}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,170,19,0.4)}
+.btn-primary:disabled{opacity:.7;cursor:not-allowed;transform:none}
+
+.progress-card{background:var(--BG);border-radius:14px;padding:20px;margin:20px 0;text-align:center}
+.progress-text{font-size:14px;color:var(--P);font-weight:600;margin-bottom:10px}
+.progress-bar{height:10px;background:var(--B);border-radius:100px;overflow:hidden;margin:0 auto;max-width:400px}
+.progress-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#00C416,#00AA13);transition:width .5s;box-shadow:0 0 10px rgba(0,170,19,0.4)}
+
+.clips-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:20px}
+.clip-card{background:var(--W);border:1px solid var(--B);border-radius:16px;overflow:hidden;transition:.2s;cursor:pointer}
 .clip-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.12);transform:translateY(-2px)}
-.clip-thumb{height:120px;display:flex;align-items:center;justify-content:center;position:relative}
-.clip-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center}
-.clip-dur{position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,0.6);color:#fff;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:600}
-.clip-score{position:absolute;top:8px;right:8px;border-radius:100px;padding:2px 8px;font-size:10px;font-weight:700}
-.clip-info{padding:10px 12px 12px}
-.clip-title{font-size:12px;font-weight:600;color:var(--T);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.nav{display:flex;height:56px;border-top:1px solid var(--B);background:var(--W)}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;background:none;border:none;font-size:10px;color:var(--TL);padding:4px 0;transition:.2s}
-.nav-item.active{color:var(--P);font-weight:700}
-.nav-item i{font-size:20px}
-.nav-plus{width:42px;height:42px;border-radius:50%;background:linear-gradient(145deg,#00C416,#00690C);display:flex;align-items:center;justify-content:center;color:#fff;margin-top:-16px;box-shadow:0 5px 15px rgba(0,170,19,0.4);border:none;cursor:pointer}
+.clip-thumb{height:150px;display:flex;align-items:center;justify-content:center;position:relative}
+.clip-icon-w{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.clip-dur{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,0.6);color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600}
+.clip-score{position:absolute;top:10px;right:10px;border-radius:100px;padding:3px 10px;font-size:11px;font-weight:700}
+.clip-info{padding:12px 14px 14px}
+.clip-title{font-size:13px;font-weight:600;color:var(--T);margin-bottom:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-dl{width:100%;height:36px;border-radius:100px;border:none;background:linear-gradient(180deg,#00C416,#00AA13);color:#fff;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;box-shadow:0 3px 10px rgba(0,170,19,0.25);transition:.2s}
+.btn-dl:hover{transform:translateY(-1px)}
+
+/* ---- MOBILE ---- */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .content{padding:16px}
+  .hero-box{padding:20px}
+  .hero-box h1{font-size:22px}
+  .clips-grid{grid-template-columns:1fr 1fr}
+  .top-bar{padding:0 16px}
+  .mobile-nav{display:flex!important}
+}
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--W);border-top:1px solid var(--B);z-index:100}
+.mobile-nav-inner{display:flex;height:100%;align-items:center}
+.m-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;background:none;border:none;font-size:10px;color:var(--TL)}
+.m-nav-item.active{color:var(--P);font-weight:700}
+.m-nav-item i{font-size:22px}
+.m-nav-plus{width:44px;height:44px;border-radius:50%;background:linear-gradient(145deg,#00C416,#00690C);display:flex;align-items:center;justify-content:center;color:#fff;margin-top:-18px;box-shadow:0 5px 18px rgba(0,170,19,0.4);border:none;cursor:pointer}
 </style>
 </head>
 <body>
-<div class="container" id="app">
-  <div class="top-bar">
-    <div class="logo"><div class="logo-icon"><i class="ti ti-video" style="color:#fff;font-size:16px"></i></div>KlikClip</div>
-    <div class="badge"><i class="ti ti-bolt" style="font-size:11px"></i> <span id="credits">45/50</span></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="side-logo"><div class="icon"><i class="ti ti-video" style="color:#fff;font-size:16px"></i></div>KlikClip</div>
+  <div class="side-user"><div class="side-avatar">T</div><div><div class="side-uname">Thomas</div><div class="side-uplan">Free plan</div></div></div>
+  <div class="side-nav">
+    <div class="side-item active" onclick="navigate('home')"><i class="ti ti-home"></i>Home</div>
+    <div class="side-item" onclick="navigate('projects')"><i class="ti ti-folder"></i>Projects</div>
+    <div class="side-item" onclick="navigate('stats')"><i class="ti ti-chart-bar"></i>Stats</div>
+    <div class="side-item" onclick="navigate('learn')"><i class="ti ti-book"></i>Learning Center</div>
+    <div class="side-item" onclick="navigate('pricing')"><i class="ti ti-coin"></i>Pricing</div>
+    <div class="side-item" onclick="navigate('settings')"><i class="ti ti-settings"></i>Settings</div>
   </div>
-  <div class="hero">
-    <h1>Generate 10 Viral Clips Today</h1>
-    <p>Paste a YouTube link — AI does the rest</p>
-    <div class="input-group" id="url-group">
-      <i class="ti ti-link" style="color:var(--TL);font-size:16px"></i>
-      <input type="text" id="url-input" placeholder="https://youtube.com/watch?v=..."/>
+  <div class="side-credits">
+    <div style="display:flex;justify-content:space-between;font-size:12px">
+      <span>Credits</span><span style="font-weight:700;color:var(--P)">45 / 50</span>
     </div>
-    <p class="error-msg" id="url-error">Please enter a valid YouTube URL</p>
-    <div class="or-divider"><hr/><span>or</span><hr/></div>
-    <div class="upload-zone" onclick="document.getElementById('file-input').click()" id="upload-zone">
-      <i class="ti ti-upload"></i>
-      <p>Click to upload video</p>
-      <small>MP4, MOV, AVI · Max 1 GB</small>
-      <input type="file" id="file-input" accept="video/*" style="display:none"/>
-    </div>
-    <div class="style-pills">
-      <button class="pill active" id="style-podcast" onclick="selectStyle('podcast')"><i class="ti ti-microphone" style="font-size:12px"></i> Podcast</button>
-      <button class="pill" id="style-gaming" onclick="selectStyle('gaming')"><i class="ti ti-device-gamepad" style="font-size:12px"></i> Gaming</button>
-      <button class="pill" id="style-vlog" onclick="selectStyle('vlog')"><i class="ti ti-video" style="font-size:12px"></i> Vlog</button>
-    </div>
-    <div class="select-row">
-      <select id="lang-select"><option value="en">English</option><option value="id">Indonesian</option></select>
-      <select id="count-select"><option value="10">10 clips</option><option value="5">5 clips</option><option value="15">15 clips</option><option value="20">20 clips</option></select>
-    </div>
-    <button class="btn-gen" id="btn-gen" onclick="generateClips()">🔥 Generate 10 Clips</button><br/>
-    <small style="color:var(--TL)">💡 Need help?</small>
-  </div>
-  <div id="progress-area" style="display:none;padding:0 20px">
-    <div class="progress-wrap">
-      <div class="progress-text" id="progress-text">Analyzing video...</div>
-      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-      <div style="font-size:12px;color:var(--TM)" id="progress-status">Downloading video</div>
-    </div>
-  </div>
-  <div id="results-area" style="display:none"></div>
-  <div class="nav">
-    <button class="nav-item active"><i class="ti ti-home"></i>Home</button>
-    <button class="nav-item"><i class="ti ti-folder"></i>Projects</button>
-    <button class="nav-item" style="position:relative;top:-8px"><div class="nav-plus"><i class="ti ti-plus" style="font-size:18px"></i></div></button>
-    <button class="nav-item"><i class="ti ti-chart-bar"></i>Stats</button>
-    <button class="nav-item"><i class="ti ti-user"></i>Account</button>
+    <div class="bar"><div class="bar-fill"></div></div>
   </div>
 </div>
-<script>
-let currentStyle = 'podcast';
 
-function selectStyle(s) {
-  currentStyle = s;
-  document.querySelectorAll('.pill').forEach(function(p) { p.classList.remove('active'); });
-  document.getElementById('style-' + s).classList.add('active');
+<!-- MAIN -->
+<div class="main">
+  <div class="top-bar">
+    <h2 id="page-title">Home</h2>
+    <div class="actions">
+      <button class="lang-btn"><i class="ti ti-world" style="font-size:13px"></i> EN</button>
+      <div class="credit-badge"><i class="ti ti-bolt" style="font-size:12px"></i> 45/50</div>
+    </div>
+  </div>
+
+  <div class="content" id="content-area">
+    <div class="hero-box">
+      <h1>Generate 10 Viral Clips Today</h1>
+      <p>Paste a YouTube link — AI finds the best moments, cuts them, and delivers TikTok-ready clips</p>
+      <div class="input-group">
+        <i class="ti ti-link" style="color:var(--TL);font-size:18px"></i>
+        <input type="text" id="url-input" placeholder="https://youtube.com/watch?v=..."/>
+      </div>
+      <div class="or-text">or upload a video</div>
+      <div class="pills">
+        <button class="pill active" onclick="selectPill(this)"><i class="ti ti-microphone"></i> Podcast</button>
+        <button class="pill" onclick="selectPill(this)"><i class="ti ti-device-gamepad"></i> Gaming</button>
+        <button class="pill" onclick="selectPill(this)"><i class="ti ti-video"></i> Vlog</button>
+        <button class="pill" onclick="selectPill(this)"><i class="ti ti-adjustments-horizontal"></i> Auto</button>
+      </div>
+      <div class="selects">
+        <select id="lang-select"><option value="en">English</option><option value="id">Indonesian</option></select>
+        <select id="count-select"><option value="10">10 clips</option><option value="5">5 clips</option><option value="15">15 clips</option><option value="20">20 clips</option></select>
+      </div>
+      <button class="btn-primary" id="btn-gen" onclick="generateClips()">🔥 Generate 10 Clips</button>
+    </div>
+
+    <div id="progress-area" style="display:none">
+      <div class="progress-card">
+        <div class="progress-text" id="progress-text">Analyzing your video...</div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+        <div style="font-size:13px;color:var(--TM);margin-top:8px" id="progress-status">Starting up</div>
+      </div>
+    </div>
+
+    <div id="results-area" style="display:none">
+      <h3 style="font-size:18px;font-weight:700;margin-bottom:4px" id="results-title">Your Clips</h3>
+      <p style="font-size:13px;color:var(--TM);margin-bottom:16px" id="results-sub">From <span id="video-title">your video</span></p>
+      <div class="clips-grid" id="clips-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <button class="m-nav-item active"><i class="ti ti-home"></i>Home</button>
+    <button class="m-nav-item"><i class="ti ti-folder"></i>Projects</button>
+    <button class="m-nav-item" style="position:relative"><div class="m-nav-plus"><i class="ti ti-plus" style="font-size:20px"></i></div></button>
+    <button class="m-nav-item"><i class="ti ti-chart-bar"></i>Stats</button>
+    <button class="m-nav-item"><i class="ti ti-user"></i>Account</button>
+  </div>
+</div>
+
+<script>
+var COLORS = ['#00AA13','#F59E0B','#10B981','#3B82F6','#8B5CF6','#EF4444','#00AA13','#F59E0B','#EC4899','#10B981'];
+var MOCK = [
+  {s:92,d:'0:32',t:'Epic Moment #1'},{s:78,d:'0:45',t:'Key Insight #2'},{s:85,d:'0:28',t:'Hook Opener #3'},
+  {s:67,d:'0:55',t:'Reaction #4'},{s:91,d:'0:38',t:'Viral Quote #5'},{s:74,d:'0:42',t:'Highlight #6'},
+  {s:88,d:'0:29',t:'Story Arc #7'},{s:63,d:'0:50',t:'Moment #8'},{s:95,d:'0:24',t:'Power Clip #9'},
+  {s:81,d:'0:36',t:'CTA Clip #10'}
+];
+
+function selectPill(el) {
+  document.querySelectorAll('.pill').forEach(function(p){p.classList.remove('active')});
+  el.classList.add('active');
+}
+
+function navigate(page) {
+  document.querySelectorAll('.side-item').forEach(function(i){i.classList.remove('active')});
+  document.querySelectorAll('.side-item').forEach(function(i){
+    if(i.textContent.trim().toLowerCase().includes(page)) i.classList.add('active');
+  });
+  document.getElementById('page-title').textContent = page.charAt(0).toUpperCase() + page.slice(1);
 }
 
 function generateClips() {
   var url = document.getElementById('url-input').value.trim();
-  var errorEl = document.getElementById('url-error');
-  var groupEl = document.getElementById('url-group');
-
   if (!url || (!url.includes('youtube.com') && !url.includes('youtu.be'))) {
-    groupEl.classList.add('error');
-    errorEl.style.display = 'block';
+    document.getElementById('url-input').parentElement.style.borderColor = '#EF4444';
+    setTimeout(function(){document.getElementById('url-input').parentElement.style.borderColor=''},2000);
     return;
   }
-  groupEl.classList.remove('error');
-  errorEl.style.display = 'none';
 
   var btn = document.getElementById('btn-gen');
   btn.disabled = true;
   btn.innerHTML = '⏳ Processing...';
 
-  document.getElementById('progress-area').style.display = 'block';
   document.getElementById('results-area').style.display = 'none';
-  document.getElementById('results-area').innerHTML = '';
+  document.getElementById('progress-area').style.display = 'block';
+  progressAnimate();
 
-  // Call the real API
+  // Try real API
   fetch('/api/analyze', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url: url })
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({url: url})
   })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (data.error) { throw new Error(data.error); }
+  .then(function(r){return r.json()})
+  .then(function(data){
+    if(data.error) throw new Error(data.error);
     pollJob(data.jobId);
   })
-  .catch(function(err) {
-    // Fallback to mock if API fails
-    fallbackMock();
-  });
+  .catch(function(){mockComplete()});
+}
+
+function progressAnimate() {
+  var p = 0;
+  var statuses = ['Connecting to YouTube...', 'Downloading video...', 'Extracting audio...', 'Detecting viral moments...', 'Cutting clips...', 'Rendering captions...', 'Finalizing...'];
+  var si = 0;
+  var iv = setInterval(function(){
+    if(document.getElementById('progress-area').style.display === 'none'){clearInterval(iv);return}
+    if(p>=95){clearInterval(iv);return}
+    p += Math.random() * 8 + 2;
+    if(p>95)p=95;
+    document.getElementById('progress-fill').style.width = p+'%';
+    document.getElementById('progress-status').textContent = statuses[si] || 'Processing...';
+    if(si < statuses.length-1) si++;
+  },800);
 }
 
 function pollJob(jobId) {
-  var steps = ['analyzing', 'downloading', 'transcribing', 'detecting', 'cutting', 'rendering'];
-  var i = 0;
-  var interval = setInterval(function() {
-    fetch('/api/job/' + jobId)
-      .then(function(r) { return r.json(); })
-      .then(function(job) {
-        if (job.status === 'completed') {
-          clearInterval(interval);
-          showResults(job);
-          return;
-        }
-        if (job.status === 'failed') {
-          clearInterval(interval);
-          fallbackMock();
-          return;
-        }
-        var pct = Math.min(95, Math.round((i / steps.length) * 100));
-        document.getElementById('progress-fill').style.width = pct + '%';
-        document.getElementById('progress-status').textContent = steps[i] || 'processing...';
-        i++;
-      })
-      .catch(function() {
-        // Keep polling
-      });
-  }, 2000);
-
-  // Timeout after 60 seconds
-  setTimeout(function() { clearInterval(interval); fallbackMock(); }, 60000);
-}
-
-function fallbackMock() {
-  document.getElementById('progress-fill').style.width = '100%';
-  document.getElementById('progress-status').textContent = 'Complete!';
-
-  var colors = ['#00AA13','#F59E0B','#10B981','#3B82F6','#8B5CF6','#EF4444','#00AA13','#F59E0B','#EC4899','#10B981'];
-  var data = [
-    {s:92,d:'0:32',t:'Epic Moment #1'},{s:78,d:'0:45',t:'Key Insight #2'},{s:85,d:'0:28',t:'Hook Opener #3'},
-    {s:67,d:'0:55',t:'Reaction #4'},{s:91,d:'0:38',t:'Viral Quote #5'},{s:74,d:'0:42',t:'Highlight #6'},
-    {s:88,d:'0:29',t:'Story Arc #7'},{s:63,d:'0:50',t:'Moment #8'},{s:95,d:'0:24',t:'Power Clip #9'},
-    {s:81,d:'0:36',t:'CTA Clip #10'}
-  ];
-  showClips(data, colors);
+  var iv = setInterval(function(){
+    fetch('/api/job/'+jobId)
+    .then(function(r){return r.json()})
+    .then(function(job){
+      if(job.status==='completed'){clearInterval(iv);showResults(job);return}
+      if(job.status==='failed'){clearInterval(iv);mockComplete();return}
+    })
+    .catch(function(){})
+  },3000);
+  setTimeout(function(){clearInterval(iv);mockComplete()},60000);
 }
 
 function showResults(job) {
-  var data = [
-    {s:92,d:"0:32",t:"Epic Moment #1"},{s:78,d:"0:45",t:"Key Insight #2"},{s:85,d:"0:28",t:"Hook Opener #3"},
-    {s:67,d:"0:55",t:"Reaction #4"},{s:91,d:"0:38",t:"Viral Quote #5"},{s:74,d:"0:42",t:"Highlight #6"},
-    {s:88,d:"0:29",t:"Story Arc #7"},{s:63,d:"0:50",t:"Moment #8"},{s:95,d:"0:24",t:"Power Clip #9"},
-    {s:81,d:"0:36",t:"CTA Clip #10"}
-  ];
-  document.getElementById('progress-fill').style.width = '100%';
-  document.getElementById('progress-status').textContent = 'Complete!';
-  var clips = (job.clips || []).map(function(c, i) {
-    return {s: c.engagementScore || 80, d: c.duration || '0:30', t: c.title || 'Clip ' + (i+1)};
-  });
-  var colors = ['#00AA13','#F59E0B','#10B981','#3B82F6','#8B5CF6','#EF4444','#00AA13','#F59E0B','#EC4899','#10B981'];
-  showClips(clips, colors);
+  document.getElementById('progress-fill').style.width='100%';
+  document.getElementById('progress-status').textContent='Complete!';
+  setTimeout(function(){
+    document.getElementById('progress-area').style.display='none';
+    var clips = (job.clips||[]).map(function(c,i){return{s:c.engagementScore||80,d:c.duration||'0:30',t:c.title||'Clip '+(i+1)}});
+    renderClips(clips.length?clips:MOCK);
+  },500);
 }
 
-function showClips(data, colors) {
+function mockComplete() {
+  document.getElementById('progress-fill').style.width='100%';
+  document.getElementById('progress-status').textContent='Complete!';
+  setTimeout(function(){
+    document.getElementById('progress-area').style.display='none';
+    renderClips(MOCK);
+  },500);
+}
+
+function renderClips(clips) {
+  var grid = document.getElementById('clips-grid');
+  grid.innerHTML = '';
+  document.getElementById('results-area').style.display = 'block';
+
+  clips.forEach(function(c,i){
+    var color = COLORS[i%COLORS.length];
+    grid.innerHTML += '<div class="clip-card">' +
+      '<div class="clip-thumb" style="background:linear-gradient(135deg,'+color+'22,'+color+'55)">' +
+        '<div class="clip-icon-w" style="background:linear-gradient(145deg,'+color+','+color+'cc)"><i class="ti ti-video" style="color:#fff;font-size:20px"></i></div>' +
+        '<div class="clip-dur">'+c.d+'</div>' +
+        '<div class="clip-score" style="background:'+color+'22;color:'+color+';border:1px solid '+color+'44">'+c.s+'%</div>' +
+      '</div>' +
+      '<div class="clip-info">' +
+        '<div class="clip-title">'+c.t+'</div>' +
+        '<button class="btn-dl" onclick="alert(\'Download: '+c.t+'\')"><i class="ti ti-download" style="font-size:12px"></i> Download</button>' +
+      '</div></div>';
+  });
+
   document.getElementById('btn-gen').disabled = false;
   document.getElementById('btn-gen').innerHTML = '🔥 Generate 10 Clips';
-
-  var area = document.getElementById('results-area');
-  area.style.display = 'block';
-  area.innerHTML = '<div class="clips-section"><h3>Your Clips</h3><div class="clips-grid" id="clips-grid"></div></div>';
-
-  var grid = document.getElementById('clips-grid');
-  data.forEach(function(c, i) {
-    var color = colors[i % colors.length];
-    grid.innerHTML += '<div class="clip-card"><div class="clip-thumb" style="background:linear-gradient(135deg,' + color + '22,' + color + '55)">' +
-      '<div class="clip-icon" style="background:linear-gradient(145deg,' + color + ',' + color + 'cc)"><i class="ti ti-video" style="color:#fff;font-size:18px"></i></div>' +
-      '<div class="clip-dur">' + c.d + '</div>' +
-      '<div class="clip-score" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44">' + c.s + '%</div></div>' +
-      '<div class="clip-info"><div class="clip-title">' + c.t + '</div>' +
-      '<button class="btn-dl" onclick="alert(\'Download: ' + c.t + '\')"><i class="ti ti-download" style="font-size:12px"></i> Download</button></div></div>';
-  });
 }
-
-// Drag/drop
-var uz = document.getElementById('upload-zone');
-uz.addEventListener('dragover', function(e) { e.preventDefault(); uz.classList.add('dragover'); });
-uz.addEventListener('dragleave', function() { uz.classList.remove('dragover'); });
-uz.addEventListener('drop', function(e) { e.preventDefault(); uz.classList.remove('dragover'); });
 </script>
 </body>
 </html>
