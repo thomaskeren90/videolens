@@ -39,7 +39,21 @@ const TMP_DIR = process.env.TMP_DIR || path.join(__dirname, '..', 'tmp');
 
 // ─── Get video metadata ───────────────────────────────────────────────────────
 async function getVideoInfo(youtubeUrl) {
-  // Extract video ID from URL
+  // Try YouTube Data API first (reliable, not blocked)
+  if (process.env.YOUTUBE_API_KEY) {
+    try {
+      const yt = require('./YouTubeAPI');
+      const result = await yt.getVideoInfo(youtubeUrl);
+      if (result && result.title) {
+        console.log('[Clipper] Used YouTube API for:', result.title);
+        return result;
+      }
+    } catch (e) {
+      console.warn('[Clipper] YouTube API failed, falling back to yt-dlp:', e.message.slice(0, 100));
+    }
+  }
+
+  // Fallback: extract video ID from URL
   let videoId = '';
   const match = youtubeUrl.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
   if (match) videoId = match[1];
@@ -51,7 +65,6 @@ async function getVideoInfo(youtubeUrl) {
     info = JSON.parse(stdout);
   } catch (e) {
     console.warn('[Clipper] yt-dlp info failed, using fallback:', e.message.slice(0, 100));
-    // Fallback: construct basic info from URL
     info = {
       id: videoId,
       title: 'YouTube Video',
