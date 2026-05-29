@@ -133,7 +133,7 @@ body{background:var(--BG);color:var(--T);min-height:100vh;display:flex}
         <option value="en">English</option>
         <option value="id">Indonesian</option>
       </select>
-      <select id="cnt-sel" onchange="updCnt()">
+      <select id="cnt-sel" onchange="updCnt()" oninput="updCnt()">
         <option value="10">10 clips</option>
         <option value="5">5 clips</option>
         <option value="15">15 clips</option>
@@ -234,8 +234,10 @@ function pick(el) {
 
 function updCnt() {
   var c = document.getElementById("cnt-sel").value;
-  document.getElementById("cnt-display").textContent = c;
-  document.getElementById("gen-btn").innerHTML = (lang==="id" ? "🔥 Buat " : "🔥 Generate ") + c + (lang==="id" ? " Klip" : " Clips");
+  var span = document.getElementById("cnt-display");
+  if (span) { span.textContent = c; return; }
+  // Fallback if span was removed
+  document.getElementById("gen-btn").innerHTML = (lang==="id" ? "\ud83d\udd25 Buat <span id=\"cnt-display\">" : "\ud83d\udd25 Generate <span id=\"cnt-display\">") + c + (lang==="id" ? "</span> Klip" : "</span> Clips");
 }
 
 function go(page) {
@@ -336,7 +338,7 @@ function renderClips(clips) {
   var g = document.getElementById("clips-grid"); g.innerHTML = "";
   document.getElementById("res-area").style.display = "block";
   document.getElementById("gen-btn").disabled = false;
-  document.getElementById("gen-btn").innerHTML = (lang==="id" ? "🔥 Buat " : "🔥 Generate ") + document.getElementById("cnt-sel").value + (lang==="id" ? " Klip" : " Clips");
+  document.getElementById("gen-btn").innerHTML = (lang==="id" ? "🔥 Buat <span id=\"cnt-display\">" : "🔥 Generate <span id=\"cnt-display\">") + document.getElementById("cnt-sel").value + (lang==="id" ? "</span> Klip" : "</span> Clips");
   clips.forEach(function(c,i){
     var col = COLS[i%COLS.length];
     g.innerHTML += '<div class="card"><div class="thumb" style="background:linear-gradient(135deg,'+col+'22,'+col+'55)">' +
