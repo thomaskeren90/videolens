@@ -220,6 +220,16 @@ async function api(method, path, body) {
   return r.json();
 }
 
+function finishGen() {
+  document.getElementById('pfill').style.width = '0%';
+  document.getElementById('prog-area').style.display = 'none';
+  var btn = document.getElementById('gen-btn');
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-bolt" style="font-size:16px"></i> 🔥 Generate Clips';
+  }
+}
+
 // ─── AUTH ───────────────────────────────────────────────────────────────────
 function showAuth() { if (token) { logout(); return; } document.getElementById('auth-modal').classList.add('show'); }
 function hideAuth() { document.getElementById('auth-modal').classList.remove('show'); }
