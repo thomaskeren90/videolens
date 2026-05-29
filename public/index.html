@@ -201,6 +201,12 @@ function fallbackMock() {
 }
 
 function showResults(job) {
+  var data = [
+    {s:92,d:"0:32",t:"Epic Moment #1"},{s:78,d:"0:45",t:"Key Insight #2"},{s:85,d:"0:28",t:"Hook Opener #3"},
+    {s:67,d:"0:55",t:"Reaction #4"},{s:91,d:"0:38",t:"Viral Quote #5"},{s:74,d:"0:42",t:"Highlight #6"},
+    {s:88,d:"0:29",t:"Story Arc #7"},{s:63,d:"0:50",t:"Moment #8"},{s:95,d:"0:24",t:"Power Clip #9"},
+    {s:81,d:"0:36",t:"CTA Clip #10"}
+  ];
   document.getElementById('progress-fill').style.width = '100%';
   document.getElementById('progress-status').textContent = 'Complete!';
   var clips = (job.clips || []).map(function(c, i) {
