@@ -41,6 +41,9 @@ body{background:var(--BG);color:var(--T);min-height:100vh;display:flex}
 .btn-p{height:52px;padding:0 40px;border-radius:100px;border:none;background:linear-gradient(180deg,#00C416,#00AA13);color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(0,170,19,0.35);display:inline-flex;align-items:center;gap:8px}
 .btn-p:hover{transform:translateY(-1px)}
 .btn-p:disabled{opacity:.7;cursor:not-allowed}
+.toggle-chip{height:32px;padding:0 12px;border-radius:100px;border:2px solid var(--B);background:var(--W);font-size:11px;font-weight:600;color:var(--TM);cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:.15s}
+.toggle-chip.active{border-color:var(--P);background:var(--PL);color:var(--P)}
+.toggle-chip:hover{border-color:#aaa}
 .pcard{background:var(--BG);border-radius:14px;padding:20px;margin:20px 0;text-align:center}
 .pbar{height:10px;background:var(--B);border-radius:100px;overflow:hidden;margin:10px auto;max-width:400px}
 .pfill{height:100%;border-radius:100px;background:linear-gradient(90deg,#00C416,#00AA13);width:0%;transition:width .3s}
@@ -132,6 +135,18 @@ body{background:var(--BG);color:var(--T);min-height:100vh;display:flex}
       <select id="style-sel"><option value="auto">Auto Detect</option><option value="podcast">Podcast</option><option value="gaming">Gaming</option><option value="talking">Talking Head</option></select>
       <select id="cnt-sel"><option value="5">5 clips</option><option value="10" selected>10 clips</option><option value="15">15 clips</option></select>
     </div>
+
+    <!-- Feature toggles -->
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;font-weight:600;color:var(--TM);margin-bottom:8px">Enhancements:</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="toggle-chip active" data-key="captions" onclick="togChip(this)"><i class="ti ti-subtitle" style="font-size:12px"></i> AI Captions</button>
+        <button class="toggle-chip" data-key="reframe" onclick="togChip(this)"><i class="ti ti-crop" style="font-size:12px"></i> AI Reframe</button>
+        <button class="toggle-chip" data-key="enhance" onclick="togChip(this)"><i class="ti ti-volume" style="font-size:12px"></i> Enhance Speech</button>
+        <button class="toggle-chip" data-key="hook" onclick="togChip(this)"><i class="ti ti-sparkles" style="font-size:12px"></i> AI Hook</button>
+      </div>
+    </div>
+
     <button class="btn-p" id="gen-btn" onclick="gen()"><i class="ti ti-bolt" style="font-size:16px"></i> 🔥 Generate Clips</button>
     <div id="msg-area"></div>
   </div>
@@ -264,6 +279,10 @@ async function onGoogleSignIn(response) {
   }
 }
 
+function togChip(el) {
+  el.classList.toggle('active');
+}
+
 function logout() {
   token = null; user = null;
   localStorage.removeItem('kc_token');
@@ -344,6 +363,12 @@ async function gen() {
   var file = fileInput.files ? fileInput.files[0] : null;
   var count = parseInt(document.getElementById('cnt-sel').value) || 10;
   
+  // Collect feature toggles
+  var features = {};
+  document.querySelectorAll('.toggle-chip').forEach(function(chip) {
+    features[chip.dataset.key] = chip.classList.contains('active');
+  });
+  
   if (!url && !file) { msg('Paste a YouTube URL or upload a video'); return; }
   if (url && !url.includes('youtube') && !url.includes('youtu.be')) { msg('Please paste a valid YouTube URL'); return; }
 
@@ -372,13 +397,14 @@ async function gen() {
       var fd = new FormData();
       fd.append('video', file);
       fd.append('count', count);
+      fd.append('features', JSON.stringify(features));
       var opts = { method: 'POST', body: fd };
       if (token) opts.headers = { 'Authorization': 'Bearer ' + token };
       var r = await fetch('/api/analyze', opts);
       d = await r.json();
     } else {
       // URL mode
-      d = await api('POST', '/api/analyze', { url: url, count: count });
+      d = await api('POST', '/api/analyze', { url: url, count: count, features: features });
     }
     if (d.error) { clearInterval(pi); finishGen(); msg(d.error); return; }
     currentJobId = d.jobId;
