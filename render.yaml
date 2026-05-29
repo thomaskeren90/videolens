@@ -12,6 +12,10 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22
+      - key: YTDLP_PATH
+        value: bin/yt-dlp
+      - key: FFMPEG_PATH
+        value: bin/ffmpeg
       - key: OPENCODE_KEY
         sync: false
       - key: JWT_SECRET
