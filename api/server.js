@@ -68,7 +68,6 @@ app.get('/api/auth/me', requireAuth, wrap(async (req, res) => {
     clips_remaining: Math.max(0, limit - (user.clips_used || 0)),
     total_processed: user.total_processed || 0,
   });
-  });
 }));
 
 // ─── GOOGLE AUTH ────────────────────────────────────────────────────────────
