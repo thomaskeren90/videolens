@@ -303,6 +303,7 @@ function saveTransactions(t) {
 
 // ─── HEALTH ──────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, version: '2.0.0', ts: new Date().toISOString() }));
+app.get('/api/config', (req, res) => res.json({ googleClientId: process.env.GOOGLE_CLIENT_ID || '' }));
 app.get('/api/packages', (req, res) => res.json({ packages: CREDIT_PACKAGES }));
 
 // ─── MY JOBS HISTORY ─────────────────────────────────────────────────────────

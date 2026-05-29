@@ -162,22 +162,7 @@ body{background:var(--BG);color:var(--T);min-height:100vh;display:flex}
     <h2 id="auth-title">Log In</h2>
     <div id="auth-form">
       <!-- Google Sign-In button -->
-      <div id="g_id_onload"
-           data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
-           data-context="signin"
-           data-ux_mode="popup"
-           data-callback="onGoogleSignIn"
-           data-auto_prompt="false">
-      </div>
-      <div class="g_id_signin"
-           data-type="standard"
-           data-shape="pill"
-           data-theme="outline"
-           data-text="signin_with"
-           data-size="large"
-           data-width="356"
-           data-logo_alignment="left">
-      </div>
+      <div id="google-btn-area"></div>
       <div style="display:flex;align-items:center;gap:12px;margin:16px 0"><div style="flex:1;height:1px;background:var(--B)"></div><span style="font-size:12px;color:var(--TL)">or</span><div style="flex:1;height:1px;background:var(--B)"></div></div>
       <div class="form-group"><label>Email</label><input type="email" id="auth-email" placeholder="you@email.com"/></div>
       <div class="form-group"><label>Password</label><input type="password" id="auth-pass" placeholder="Min 6 characters"/></div>
@@ -578,6 +563,21 @@ function go(page) {
 // ─── INIT ────────────────────────────────────────────────────────────────────
 if (token) loadUser();
 loadPackages();
+initGoogle();
+
+async function initGoogle() {
+  try {
+    var cfg = await api('GET', '/api/config');
+    if (cfg.googleClientId) {
+      var area = document.getElementById('google-btn-area');
+      area.innerHTML = '<div id="g_id_onload" data-client_id="' + cfg.googleClientId + '" data-context="signin" data-ux_mode="popup" data-callback="onGoogleSignIn" data-auto_prompt="false"></div><div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="signin_with" data-size="large" data-width="356" data-logo_alignment="left"></div>';
+      if (typeof google !== 'undefined' && google.accounts) {
+        google.accounts.id.initialize({ client_id: cfg.googleClientId, callback: onGoogleSignIn });
+        google.accounts.id.renderButton(document.querySelector('.g_id_signin'), { type: 'standard', shape: 'pill', theme: 'outline', text: 'signin_with', size: 'large', width: 356 });
+      }
+    }
+  } catch(e) {} // Google not configured, hide button silently
+}
 
 // Add CSS animation
 var style = document.createElement('style');
