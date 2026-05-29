@@ -118,7 +118,7 @@ body{background:var(--BG);color:var(--T);min-height:100vh;display:flex}
   <div class="top-bar">
     <h2 id="page-title">Home</h2>
     <div class="actions">
-      <button class="lang-btn"><i class="ti ti-world" style="font-size:13px"></i> EN</button>
+      <button class="lang-btn" onclick="toggleLang()"><i class="ti ti-world" style="font-size:13px"></i> <span id="lang-label">EN</span></button>
       <div class="credit-badge"><i class="ti ti-bolt" style="font-size:12px"></i> 45/50</div>
     </div>
   </div>
@@ -304,6 +304,46 @@ function downloadClip(name) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
+}
+
+
+var currentLang = "en";
+var translations = {
+  "en": {
+    "hero_title": "Generate 10 Viral Clips Today",
+    "hero_sub": "Paste a YouTube link — AI finds the best moments, cuts them, and delivers TikTok-ready clips",
+    "input_placeholder": "https://youtube.com/watch?v=...",
+    "or_text": "or upload a video",
+    "btn_gen": "🔥 Generate 10 Clips",
+    "processing": "Processing...",
+    "credits": "Credits"
+  },
+  "id": {
+    "hero_title": "Hasilkan 10 Klip Viral Hari Ini",
+    "hero_sub": "Tempel link YouTube — AI temukan momen terbaik, potong, dan siapkan klip TikTok",
+    "input_placeholder": "https://youtube.com/watch?v=...",
+    "or_text": "atau unggah video",
+    "btn_gen": "🔥 Buat 10 Klip",
+    "processing": "Memproses...",
+    "credits": "Kredit"
+  }
+};
+
+function toggleLang() {
+  currentLang = currentLang === "en" ? "id" : "en";
+  document.getElementById("lang-label").textContent = currentLang.toUpperCase();
+  var t = translations[currentLang];
+  if (!t) return;
+  var title = document.querySelector(".hero-box h1");
+  var sub = document.querySelector(".hero-box p");
+  var input = document.getElementById("url-input");
+  var orText = document.querySelector(".or-text");
+  var genBtn = document.getElementById("btn-gen");
+  if (title) title.textContent = t.hero_title;
+  if (sub) sub.textContent = t.hero_sub;
+  if (input) input.placeholder = t.input_placeholder;
+  if (orText) orText.textContent = t.or_text;
+  if (genBtn) genBtn.textContent = t.btn_gen;
 }
 
 </script>
