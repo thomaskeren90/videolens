@@ -25,6 +25,9 @@ function findBin(name) {
 const YTDLP = findBin('yt-dlp');
 const FFMPEG = findBin('ffmpeg');
 
+// Common yt-dlp options to avoid bot detection
+const YTDLP_OPTS = '--js-runtimes node --extractor-retries 3 --geo-bypass --extractor-args "youtube:player_client=android" --user-agent "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36"';
+
 console.log('[Clipper] YTDLP:', YTDLP);
 console.log('[Clipper] FFMPEG:', FFMPEG);
 
@@ -36,15 +39,37 @@ const TMP_DIR = process.env.TMP_DIR || path.join(__dirname, '..', 'tmp');
 
 // ─── Get video metadata ───────────────────────────────────────────────────────
 async function getVideoInfo(youtubeUrl) {
-  const cmd = `${YTDLP} --dump-json --no-playlist "${youtubeUrl}"`;
-  const { stdout } = await execAsync(cmd, { timeout: 30000 });
-  const info = JSON.parse(stdout);
+  // Extract video ID from URL
+  let videoId = '';
+  const match = youtubeUrl.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (match) videoId = match[1];
+
+  let info;
+  try {
+    const cmd = `${YTDLP} ${YTDLP_OPTS} --dump-json --no-playlist "${youtubeUrl}"`;
+    const { stdout } = await execAsync(cmd, { timeout: 60000 });
+    info = JSON.parse(stdout);
+  } catch (e) {
+    console.warn('[Clipper] yt-dlp info failed, using fallback:', e.message.slice(0, 100));
+    // Fallback: construct basic info from URL
+    info = {
+      id: videoId,
+      title: 'YouTube Video',
+      description: '',
+      duration: 600,
+      thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+      uploader: '',
+      chapters: [],
+      subtitles: {},
+      automatic_captions: {},
+    };
+  }
 
   // Extract transcript from subtitles if available
   let transcript = null;
   if (info.subtitles?.id?.[0] || info.automatic_captions?.id?.[0]) {
     try {
-      const subCmd = `${YTDLP} --write-auto-sub --sub-lang id,en --sub-format srv3/vtt/best --skip-download -o "${TMP_DIR}/%(id)s" "${youtubeUrl}"`;
+      const subCmd = `${YTDLP} ${YTDLP_OPTS} --write-auto-sub --sub-lang id,en --sub-format srv3/vtt/best --skip-download -o "${TMP_DIR}/%(id)s" "${youtubeUrl}"`;
       await execAsync(subCmd, { timeout: 30000 });
       const subFiles = fs.readdirSync(TMP_DIR).filter(f => f.startsWith(info.id) && (f.endsWith('.vtt') || f.endsWith('.srv3')));
       if (subFiles[0]) {
@@ -77,8 +102,8 @@ async function getVideoInfo(youtubeUrl) {
 async function downloadVideo(youtubeUrl, videoId) {
   const outputPath = path.join(TMP_DIR, `${videoId}.%(ext)s`);
   // Download best quality up to 1080p to keep processing fast
-  const cmd = `${YTDLP} -f "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best" --merge-output-format mp4 -o "${outputPath}" --no-playlist "${youtubeUrl}"`;
-  await execAsync(cmd, { timeout: 600000 }); // 10 min timeout
+  const cmd = `${YTDLP} ${YTDLP_OPTS} -f "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best" --merge-output-format mp4 -o "${outputPath}" --no-playlist "${youtubeUrl}"`;
+  await execAsync(cmd, { timeout: 300000 }); // 5 min timeout
 
   const mp4 = path.join(TMP_DIR, `${videoId}.mp4`);
   if (fs.existsSync(mp4)) return mp4;
