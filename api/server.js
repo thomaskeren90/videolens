@@ -13,15 +13,17 @@ const { requireAuth, optionalAuth, register, login, checkAndDecrementQuota, addC
 const { createSnapToken, verifyWebhookSignature, isPaymentSuccess, CREDIT_PACKAGES, getPackage } = require('./lib/Midtrans');
 const { getVideoInfo, downloadVideo, processClip, cleanupTmp, getClipPath, clipExists } = require('./lib/Clipper');
 const { detectHighlights, fallbackHighlights } = require('./lib/AIHighlight');
+const multer = require('multer');
+const upload = multer({ dest: UPLOAD_DIR, limits: { fileSize: 500 * 1024 * 1024 } });
 
 const app = express();
 const PORT = process.env.PORT || 3030;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 const CLIPS_DIR = process.env.CLIPS_DIR || path.join(__dirname, 'clips');
-const TMP_DIR = process.env.TMP_DIR || path.join(__dirname, 'tmp');
+const UPLOAD_DIR = path.join(__dirname, 'uploads');
 
 // Ensure dirs exist
-[CLIPS_DIR, TMP_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
+[CLIPS_DIR, TMP_DIR, UPLOAD_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
 
 // ─── In-memory job store (lost on restart, fine for MVP) ────────────────────
 const jobs = new Map();
@@ -118,14 +120,19 @@ app.post('/api/auth/google', wrap(async (req, res) => {
   res.json({ token, user: { id: user.id, email: user.email, name: user.name, plan: user.plan, clips_used: user.clips_used } });
 }));
 
-// ─── ANALYZE: extract highlights ─────────────────────────────────────────────
-app.post('/api/analyze', optionalAuth, wrap(async (req, res) => {
-  const { url } = req.body;
-  if (!url || !url.includes('youtu')) return res.status(400).json({ error: 'Invalid YouTube URL' });
+// ─── ANALYZE: extract highlights (URL or file upload) ────────────────────────
+app.post('/api/analyze', optionalAuth, upload.single('video'), wrap(async (req, res) => {
+  const { url, count } = req.body;
+  const file = req.file;
+  
+  if (!url && !file) return res.status(400).json({ error: 'URL or video file required' });
+  if (url && !url.includes('youtu')) return res.status(400).json({ error: 'Invalid YouTube URL' });
 
   const jobId = uuidv4();
+  const clipCount = parseInt(count) || 10;
   const job = {
-    id: jobId, youtube_url: url, user_id: req.user?.id || 'anonymous',
+    id: jobId, youtube_url: url || null, local_file: file ? file.path : null,
+    clip_count: clipCount, user_id: req.user?.id || 'anonymous',
     status: 'analyzing', highlights: null, clips: [], error: null,
     video_title: '', video_thumb: '', video_duration: 0,
     created_at: new Date().toISOString(),
@@ -140,27 +147,44 @@ app.post('/api/analyze', optionalAuth, wrap(async (req, res) => {
 
 async function processAsync(job) {
   try {
-    // 1. Get video metadata + transcript
-    const info = await getVideoInfo(job.youtube_url);
+    let info;
+    if (job.local_file) {
+      // Uploaded file mode — basic info (no yt-dlp needed)
+      info = { id: path.basename(job.local_file), title: 'Uploaded Video', description: '', duration: 600, thumbnail: '', uploader: '', chapters: [], transcript: '' };
+      // Try to get duration via ffprobe
+      try {
+        const { exec } = require('child_process');
+        const { promisify } = require('util');
+        const execAsync = promisify(exec);
+        const ffprobe = process.env.FFMPEG_PATH || 'ffprobe';
+        const { stdout } = await execAsync(`${ffprobe} -v error -show_entries format=duration -of csv=p=0 "${job.local_file}"`, { timeout: 10000 });
+        info.duration = parseFloat(stdout) || 600;
+      } catch {}
+    } else {
+      // YouTube URL mode
+      const ytdlp = require('./lib/Clipper');
+      info = await ytdlp.getVideoInfo(job.youtube_url);
+    }
+    
     job.video_title = info.title;
-    job.video_thumb = info.thumbnail;
+    job.video_thumb = info.thumbnail || '';
     job.video_duration = info.duration;
 
-    // 2. AI detects highlights
+    // 2. AI detects highlights (pass clip count)
     let highlights;
     try {
-      highlights = await detectHighlights(info);
+      highlights = await detectHighlights(info, job.clip_count);
     } catch (e) {
       console.warn('[VS] AI failed, using fallback:', e.message);
-      highlights = fallbackHighlights(info.duration);
+      highlights = fallbackHighlights(info.duration, job.clip_count);
     }
 
     // 3. Create clip records
     job.highlights = highlights;
-    job.clips = (highlights.clips || []).map((h, i) => ({
-      id: uuidv4(), job_id: job.id, title: h.title,
-      start_sec: h.start_sec, end_sec: h.end_sec,
-      score: h.score, reason: h.reason, hook: h.hook,
+    job.clips = (highlights.clips || []).slice(0, job.clip_count).map((h, i) => ({
+      id: uuidv4(), job_id: job.id, title: h.title || h.hook_text || 'Clip ' + (i + 1),
+      start_sec: h.start_sec || h.start_time, end_sec: h.end_sec || h.end_time,
+      score: h.total_score || h.hook_score, reason: h.context_note || h.reason || '', hook: h.caption || h.hook_text || '',
       status: 'pending',
     }));
     job.status = 'done';
@@ -198,8 +222,8 @@ app.post('/api/clip', requireAuth, wrap(async (req, res) => {
   // Process async
   (async () => {
     try {
-      // Download video
-      const sourcePath = await downloadVideo(job.youtube_url, job.id);
+      // Get video source — download from YouTube or use uploaded file
+      const sourcePath = job.local_file || await downloadVideo(job.youtube_url, job.id);
       clip.status = 'processing';
 
       // Cut + crop + caption
@@ -224,6 +248,8 @@ app.post('/api/clip', requireAuth, wrap(async (req, res) => {
       clip.error = err.message;
     } finally {
       cleanupTmp(job.id);
+      // Clean up uploaded file
+      if (job.local_file) { try { fs.unlinkSync(job.local_file); } catch {} }
     }
   })();
 }));
