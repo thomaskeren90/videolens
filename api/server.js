@@ -14,13 +14,12 @@ const { createSnapToken, verifyWebhookSignature, isPaymentSuccess, CREDIT_PACKAG
 const { getVideoInfo, downloadVideo, processClip, cleanupTmp, getClipPath, clipExists } = require('./lib/Clipper');
 const { detectHighlights, fallbackHighlights } = require('./lib/AIHighlight');
 const multer = require('multer');
-const upload = multer({ dest: UPLOAD_DIR, limits: { fileSize: 500 * 1024 * 1024 } });
-
 const app = express();
 const PORT = process.env.PORT || 3030;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 const CLIPS_DIR = process.env.CLIPS_DIR || path.join(__dirname, 'clips');
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
+const upload = multer({ dest: UPLOAD_DIR, limits: { fileSize: 500 * 1024 * 1024 } });
 
 // Ensure dirs exist
 [CLIPS_DIR, TMP_DIR, UPLOAD_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
