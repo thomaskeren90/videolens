@@ -492,7 +492,7 @@ async function processClip(clipId) {
 
   try {
     var d = await api('POST', '/api/clip', { jobId: currentJobId, clipId: clipId });
-    if (d.error) { msg(d.error, 'err'); btn.disabled = false; btn.textContent = 'Generate & Download'; return; }
+    if (d.error) { msg('Error: ' + d.error, 'err'); btn.disabled = false; btn.textContent = 'Generate & Download'; return; }
 
     // Poll for clip readiness
     pollClipStatus(clipId, btn);
@@ -521,7 +521,7 @@ function pollClipStatus(clipId, btn) {
         clearInterval(iv);
         btn.disabled = false;
         btn.textContent = 'Generate & Download';
-        msg('Clip processing failed', 'err');
+        msg('Clip processing error: ' + (clip.error || 'unknown error'), 'err');
         return;
       }
     } catch(e) {}
@@ -537,26 +537,30 @@ function pollClipStatus(clipId, btn) {
 function downloadClip(clipId) {
   if (!token) { showAuth(); return; }
   var btn = document.getElementById('dlbtn-' + clipId);
-  if (btn) { btn.textContent = 'Downloading...'; btn.disabled = true; }
-  fetch('/api/download/' + clipId, { headers: { 'Authorization': 'Bearer ' + token } })
-    .then(function(r) {
-      if (!r.ok) throw new Error('Download failed');
-      return r.blob();
-    })
-    .then(function(blob) {
+  if (btn) { btn.textContent = 'Starting download...'; btn.disabled = true; }
+  // Use window.open with token header trick — more reliable than blob
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/api/download/' + clipId, true);
+  xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+  xhr.responseType = 'blob';
+  xhr.onload = function() {
+    if (xhr.status === 200) {
       var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
+      a.href = URL.createObjectURL(xhr.response);
       a.download = 'klikclip-' + clipId + '.mp4';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
       setTimeout(function() { URL.revokeObjectURL(a.href); }, 10000);
       if (btn) { btn.textContent = 'Download'; btn.disabled = false; }
-    })
-    .catch(function() {
-      msg('Download failed. Clip may not be ready.', 'err');
+    } else {
+      msg('Download failed: clip not ready (error ' + xhr.status + ')', 'err');
       if (btn) { btn.textContent = 'Download'; btn.disabled = false; }
-    });
+    }
+  };
+  xhr.onerror = function() {
+    msg('Download failed - network error', 'err');
+    if (btn) { btn.textContent = 'Download'; btn.disabled = false; }
+  };
+  xhr.send();
 }
 
 // ─── PAYMENT ─────────────────────────────────────────────────────────────────
@@ -643,15 +647,18 @@ initGoogle();
 async function initGoogle() {
   try {
     var cfg = await api('GET', '/api/config');
-    if (cfg.googleClientId) {
-      var area = document.getElementById('google-btn-area');
-      area.innerHTML = '<div id="g_id_onload" data-client_id="' + cfg.googleClientId + '" data-context="signin" data-ux_mode="popup" data-callback="onGoogleSignIn" data-auto_prompt="false"></div><div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="signin_with" data-size="large" data-width="356" data-logo_alignment="left"></div>';
-      if (typeof google !== 'undefined' && google.accounts) {
-        google.accounts.id.initialize({ client_id: cfg.googleClientId, callback: onGoogleSignIn });
-        google.accounts.id.renderButton(document.querySelector('.g_id_signin'), { type: 'standard', shape: 'pill', theme: 'outline', text: 'signin_with', size: 'large', width: 356 });
-      }
+    if (!cfg.googleClientId) return;
+    // Wait for Google library to load (max 5s)
+    for (var i = 0; i < 50; i++) {
+      if (typeof google !== 'undefined' && google.accounts) break;
+      await new Promise(function(r){setTimeout(r, 100)});
     }
-  } catch(e) {} // Google not configured, hide button silently
+    var area = document.getElementById('google-btn-area');
+    if (!area) return;
+    google.accounts.id.initialize({ client_id: cfg.googleClientId, callback: onGoogleSignIn });
+    google.accounts.id.renderButton(area, { type: 'standard', shape: 'pill', theme: 'outline', text: 'signin_with', size: 'large', width: 356 });
+    google.accounts.id.prompt(); // One-tap
+  } catch(e) {} // Google not configured, hide silently
 }
 
 // Upload zone drag/drop + file select

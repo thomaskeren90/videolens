@@ -186,15 +186,25 @@ function buildCaptionFilter(text, outW, outH) {
   const boxH = Math.round(outH * 0.12);
   const y = outH - boxH - Math.round(outH * 0.05);
 
-  return (
-    `drawbox=x=0:y=${y}:w=${outW}:h=${boxH}:color=black@0.65:t=fill,` +
-    `drawtext=text='${safe}':fontsize=${fontSize}:fontcolor=white:` +
-    `x=(w-text_w)/2:y=${y + Math.round(boxH * 0.3)}:` +
-    `fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:` +
-    `borderw=2:bordercolor=black`
-  );
-}
+  // Find a font file that exists
+  const fonts = [
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+    '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+    '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+    '/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf',
+    ''
+  ];
+  const fontfile = fonts.find(function(f){ return f && fs.existsSync(f); }) || '';
 
+  var filter = 'drawbox=x=0:y=' + y + ':w=' + outW + ':h=' + boxH + ':color=black@0.65:t=fill,' +
+    'drawtext=text=' + "'" + safe + "'" + ':fontsize=' + fontSize + ':fontcolor=white:' +
+    'x=(w-text_w)/2:y=' + (y + Math.round(boxH * 0.3));
+  if (fontfile) filter += ':fontfile=' + fontfile;
+  filter += ':borderw=2:bordercolor=black';
+  return filter;
+
+}
 function runFFmpeg(args) {
   return new Promise((resolve, reject) => {
     const proc = spawn(FFMPEG, args, { stdio: ['ignore', 'pipe', 'pipe'] });
