@@ -1,94 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>KlikClip — AI Viral Clip Factory</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css" rel="stylesheet"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>KlikClip — AI Viral Clip Factory</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif}
 :root{--P:#00AA13;--PD:#008A0E;--PL:#E6F7E8;--BG:#F5F7FA;--W:#fff;--T:#1F2937;--TM:#6B7280;--TL:#9CA3AF;--B:#E5E7EB}
 body{background:var(--BG);color:var(--T);min-height:100vh;display:flex}
-
-/* ---- SIDEBAR (desktop) ---- */
 .sidebar{width:240px;background:var(--W);border-right:1px solid var(--B);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50}
-.side-logo{display:flex;align-items:center;gap:8px;padding:20px 20px 16px;font-size:18px;font-weight:800;color:var(--T);border-bottom:1px solid var(--B)}
-.side-logo .icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(145deg,#00C416,#00690C);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,170,19,0.3)}
+.side-logo{display:flex;align-items:center;gap:8px;padding:20px 20px 16px;font-size:18px;font-weight:800;border-bottom:1px solid var(--B)}
+.side-logo .icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(145deg,#00C416,#00690C);display:flex;align-items:center;justify-content:center}
 .side-user{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--B);cursor:pointer}
-.side-avatar{width:32px;height:32px;border-radius:8px;background:var(--P);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
-.side-uname{font-size:13px;font-weight:600}
-.side-uplan{font-size:11px;color:var(--TM)}
-.side-nav{flex:1;padding:8px 8px;overflow-y:auto}
+.side-avatar{width:32px;height:32px;border-radius:8px;background:var(--P);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+.side-nav{flex:1;padding:8px;overflow-y:auto}
 .side-item{display:flex;align-items:center;gap:10px;padding:10px 12px;font-size:13px;font-weight:500;color:var(--T);cursor:pointer;border-radius:10px;transition:.15s;margin-bottom:2px}
 .side-item:hover{background:var(--PL)}
 .side-item.active{background:var(--PL);color:var(--P);font-weight:700;border-left:3px solid var(--P);border-radius:10px 0 0 10px;margin-left:-8px;padding-left:17px}
 .side-item i{font-size:18px;width:20px;text-align:center}
-.side-item .badge{font-size:10px;padding:1px 7px;border-radius:4px;background:var(--PL);color:var(--P);margin-left:auto;font-weight:700}
 .side-credits{padding:12px 16px;border-top:1px solid var(--B);font-size:12px}
 .side-credits .bar{height:6px;background:var(--B);border-radius:100px;margin-top:6px;overflow:hidden}
 .side-credits .bar-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#00C416,#00AA13);width:90%}
-
-/* ---- MAIN CONTENT ---- */
 .main{margin-left:240px;flex:1;min-height:100vh;display:flex;flex-direction:column}
 .top-bar{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:var(--W);border-bottom:1px solid var(--B)}
-.top-bar h2{font-size:18px;font-weight:700;color:var(--T)}
-.top-bar .actions{display:flex;align-items:center;gap:10px}
+.top-bar h2{font-size:18px;font-weight:700}
 .lang-btn{height:30px;padding:0 10px;border-radius:100px;border:1.5px solid var(--B);background:var(--W);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px}
 .credit-badge{height:30px;padding:0 10px;border-radius:100px;background:var(--PL);display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--P)}
-
-.content{padding:32px;max-width:900px;width:100%;margin:0 auto}
-
-.hero-box{background:linear-gradient(160deg,#F0FFF2,#fff);border-radius:20px;padding:32px;border:1px solid var(--B);margin-bottom:24px}
-.hero-box h1{font-size:28px;font-weight:800;color:var(--T);margin-bottom:6px;line-height:1.2}
-.hero-box p{font-size:15px;color:var(--TM);margin-bottom:24px}
-.input-group{display:flex;align-items:center;gap:8px;background:var(--W);border:2px solid var(--B);border-radius:12px;padding:0 16px;height:52px;max-width:600px;transition:.2s}
-.input-group:focus-within{border-color:var(--P);box-shadow:0 0 0 3px rgba(0,170,19,0.1)}
-.input-group input{flex:1;border:none;outline:none;font-size:14px;color:var(--T);background:transparent}
+.page{display:none;padding:32px;max-width:900px;width:100%;margin:0 auto}
+.page.active{display:block}
+.hero{background:linear-gradient(160deg,#F0FFF2,#fff);border-radius:20px;padding:32px;border:1px solid var(--B);margin-bottom:24px}
+.hero h1{font-size:28px;font-weight:800;margin-bottom:6px}
+.hero p{font-size:15px;color:var(--TM);margin-bottom:24px}
+.input-row{display:flex;align-items:center;gap:8px;background:var(--W);border:2px solid var(--B);border-radius:12px;padding:0 16px;height:52px;max-width:600px;transition:.2s}
+.input-row:focus-within{border-color:var(--P)}
+.input-row input{flex:1;border:none;outline:none;font-size:14px;color:var(--T);background:transparent}
 .or-text{font-size:12px;color:var(--TL);margin:12px 0}
 .pills{display:flex;gap:8px;margin:16px 0;flex-wrap:wrap}
-.pill{height:36px;padding:0 16px;border-radius:100px;border:2px solid var(--B);background:var(--W);font-size:13px;font-weight:600;color:var(--TM);cursor:pointer;transition:.2s}
+.pill{height:36px;padding:0 16px;border-radius:100px;border:2px solid var(--B);background:var(--W);font-size:13px;font-weight:600;color:var(--TM);cursor:pointer}
 .pill.active{border-color:var(--P);background:var(--PL);color:var(--P)}
 .selects{display:flex;gap:12px;margin-bottom:20px;max-width:400px}
 .selects select{flex:1;height:44px;border:2px solid var(--B);border-radius:10px;padding:0 12px;font-size:13px;color:var(--T);background:var(--W)}
-.btn-primary{height:52px;padding:0 40px;border-radius:100px;border:none;background:linear-gradient(180deg,#00C416,#00AA13);color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(0,170,19,0.35);transition:.2s;display:inline-flex;align-items:center;gap:8px}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,170,19,0.4)}
-.btn-primary:disabled{opacity:.7;cursor:not-allowed;transform:none}
-
-.progress-card{background:var(--BG);border-radius:14px;padding:20px;margin:20px 0;text-align:center}
-.progress-text{font-size:14px;color:var(--P);font-weight:600;margin-bottom:10px}
-.progress-bar{height:10px;background:var(--B);border-radius:100px;overflow:hidden;margin:0 auto;max-width:400px}
-.progress-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#00C416,#00AA13);transition:width .5s;box-shadow:0 0 10px rgba(0,170,19,0.4)}
-
-.clips-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:20px}
-.clip-card{background:var(--W);border:1px solid var(--B);border-radius:16px;overflow:hidden;transition:.2s;cursor:pointer}
-.clip-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.12);transform:translateY(-2px)}
-.clip-thumb{height:150px;display:flex;align-items:center;justify-content:center;position:relative}
-.clip-icon-w{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
-.clip-dur{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,0.6);color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600}
-.clip-score{position:absolute;top:10px;right:10px;border-radius:100px;padding:3px 10px;font-size:11px;font-weight:700}
-.clip-info{padding:12px 14px 14px}
-.clip-title{font-size:13px;font-weight:600;color:var(--T);margin-bottom:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.btn-dl{width:100%;height:36px;border-radius:100px;border:none;background:linear-gradient(180deg,#00C416,#00AA13);color:#fff;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;box-shadow:0 3px 10px rgba(0,170,19,0.25);transition:.2s}
-.btn-dl:hover{transform:translateY(-1px)}
-
-/* ---- MOBILE ---- */
+.btn-p{height:52px;padding:0 40px;border-radius:100px;border:none;background:linear-gradient(180deg,#00C416,#00AA13);color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(0,170,19,0.35);display:inline-flex;align-items:center;gap:8px}
+.btn-p:hover{transform:translateY(-1px)}
+.btn-p:disabled{opacity:.7;cursor:not-allowed}
+.pcard{background:var(--BG);border-radius:14px;padding:20px;margin:20px 0;text-align:center}
+.pbar{height:10px;background:var(--B);border-radius:100px;overflow:hidden;margin:10px auto;max-width:400px}
+.pfill{height:100%;border-radius:100px;background:linear-gradient(90deg,#00C416,#00AA13);transition:width .5s}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:20px}
+.card{background:var(--W);border:1px solid var(--B);border-radius:16px;overflow:hidden;transition:.2s}
+.card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.12);transform:translateY(-2px)}
+.thumb{height:150px;display:flex;align-items:center;justify-content:center;position:relative}
+.cicon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.cdur{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,0.6);color:#fff;border-radius:6px;padding:3px 8px;font-size:11px}
+.cscore{position:absolute;top:10px;right:10px;border-radius:100px;padding:3px 10px;font-size:11px;font-weight:700}
+.cinfo{padding:12px 14px 14px}
+.ctitle{font-size:13px;font-weight:600;margin-bottom:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-d{width:100%;height:36px;border-radius:100px;border:none;background:linear-gradient(180deg,#00C416,#00AA13);color:#fff;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.section{background:var(--W);border:1px solid var(--B);border-radius:14px;overflow:hidden;margin-bottom:12px}
+.section-h{padding:14px 16px;border-bottom:1px solid var(--B);display:flex;justify-content:space-between;align-items:center}
+.section-h span{font-weight:600}
+.section-b{padding:12px 16px;font-size:13px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.stat-box{background:var(--W);border:1px solid var(--B);border-radius:14px;padding:24px}
+.stat-num{font-size:32px;font-weight:800}
+.learn-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.learn-card{background:var(--W);border:1px solid var(--B);border-radius:14px;padding:20px;cursor:pointer}
+.learn-card:hover{border-color:var(--P)}
+.price-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.price-card{background:var(--W);border:2px solid var(--B);border-radius:16px;padding:20px;text-align:center}
+.price-card.pop{border-color:var(--P);box-shadow:0 4px 16px rgba(0,170,19,0.15);position:relative}
+.price-name{font-size:16px;font-weight:700}
+.price-amt{font-size:28px;font-weight:800;margin:8px 0}
+.price-sub{font-size:11px;font-weight:700;color:var(--P);margin-bottom:4px}
+.price-feat{font-size:12px;color:var(--TM)}
+.price-btn{margin-top:12px;height:36px;padding:0 20px;border-radius:100px;cursor:pointer;font-weight:600;border:2px solid var(--B);background:var(--W)}
+.price-btn.primary{border:none;background:linear-gradient(180deg,#00C416,#00AA13);color:#fff;font-weight:700}
 @media(max-width:768px){
-  .sidebar{display:none}
-  .main{margin-left:0}
-  .content{padding:16px}
-  .hero-box{padding:20px}
-  .hero-box h1{font-size:22px}
-  .clips-grid{grid-template-columns:1fr 1fr}
-  .top-bar{padding:0 16px}
-  .mobile-nav{display:flex!important}
+  .sidebar{display:none}.main{margin-left:0}.page{padding:16px}.hero{padding:20px}.hero h1{font-size:22px}
+  .grid{grid-template-columns:1fr 1fr}.price-grid{grid-template-columns:1fr}.learn-grid{grid-template-columns:1fr}
+  .top-bar{padding:0 16px}.mobile-nav{display:flex!important}
 }
 .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--W);border-top:1px solid var(--B);z-index:100}
 .mobile-nav-inner{display:flex;height:100%;align-items:center}
-.m-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;background:none;border:none;font-size:10px;color:var(--TL)}
-.m-nav-item.active{color:var(--P);font-weight:700}
-.m-nav-item i{font-size:22px}
-.m-nav-plus{width:44px;height:44px;border-radius:50%;background:linear-gradient(145deg,#00C416,#00690C);display:flex;align-items:center;justify-content:center;color:#fff;margin-top:-18px;box-shadow:0 5px 18px rgba(0,170,19,0.4);border:none;cursor:pointer}
+.m-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;background:none;border:none;font-size:10px;color:var(--TL)}
+.m-item.active{color:var(--P);font-weight:700}
+.m-item i{font-size:22px}
+.m-plus{width:44px;height:44px;border-radius:50%;background:linear-gradient(145deg,#00C416,#00690C);display:flex;align-items:center;justify-content:center;color:#fff;margin-top:-18px;box-shadow:0 5px 18px rgba(0,170,19,0.4);border:none;cursor:pointer}
 </style>
 </head>
 <body>
@@ -96,286 +95,267 @@ body{background:var(--BG);color:var(--T);min-height:100vh;display:flex}
 <!-- SIDEBAR -->
 <div class="sidebar">
   <div class="side-logo"><div class="icon"><i class="ti ti-video" style="color:#fff;font-size:16px"></i></div>KlikClip</div>
-  <div class="side-user"><div class="side-avatar">T</div><div><div class="side-uname">Thomas</div><div class="side-uplan">Free plan</div></div></div>
+  <div class="side-user"><div class="side-avatar">T</div><div><div class="side-uname">Thomas</div><div style="font-size:11px;color:var(--TM)">Free plan</div></div></div>
   <div class="side-nav">
-    <div class="side-item active" onclick="navigate('home')"><i class="ti ti-home"></i>Home</div>
-    <div class="side-item" onclick="navigate('projects')"><i class="ti ti-folder"></i>Projects</div>
-    <div class="side-item" onclick="navigate('stats')"><i class="ti ti-chart-bar"></i>Stats</div>
-    <div class="side-item" onclick="navigate('learn')"><i class="ti ti-book"></i>Learning Center</div>
-    <div class="side-item" onclick="navigate('pricing')"><i class="ti ti-coin"></i>Pricing</div>
-    <div class="side-item" onclick="navigate('settings')"><i class="ti ti-settings"></i>Settings</div>
+    <div class="side-item active" onclick="go('home')"><i class="ti ti-home"></i>Home</div>
+    <div class="side-item" onclick="go('projects')"><i class="ti ti-folder"></i>Projects</div>
+    <div class="side-item" onclick="go('stats')"><i class="ti ti-chart-bar"></i>Stats</div>
+    <div class="side-item" onclick="go('learn')"><i class="ti ti-book"></i>Learning Center</div>
+    <div class="side-item" onclick="go('pricing')"><i class="ti ti-coin"></i>Pricing</div>
+    <div class="side-item" onclick="go('settings')"><i class="ti ti-settings"></i>Settings</div>
   </div>
-  <div class="side-credits">
-    <div style="display:flex;justify-content:space-between;font-size:12px">
-      <span>Credits</span><span style="font-weight:700;color:var(--P)">45 / 50</span>
-    </div>
-    <div class="bar"><div class="bar-fill"></div></div>
-  </div>
+  <div class="side-credits"><div style="display:flex;justify-content:space-between"><span>Credits</span><span style="color:var(--P);font-weight:700">45 / 50</span></div><div class="bar"><div class="bar-fill"></div></div></div>
 </div>
 
 <!-- MAIN -->
 <div class="main">
   <div class="top-bar">
-    <h2 id="page-title">Home</h2>
-    <div class="actions">
-      <button class="lang-btn" onclick="toggleLang()"><i class="ti ti-world" style="font-size:13px"></i> <span id="lang-label">EN</span></button>
+    <h2 id="ptitle">Home</h2>
+    <div class="actions" style="display:flex;gap:10px">
+      <button class="lang-btn" onclick="togLang()"><i class="ti ti-world" style="font-size:13px"></i> <span id="llabel">EN</span></button>
       <div class="credit-badge"><i class="ti ti-bolt" style="font-size:12px"></i> 45/50</div>
     </div>
   </div>
 
-  <div id="page-home" class="page" style="display:block">
-  <div class="content">
-    <div class="hero-box">
-      <h1>Generate 10 Viral Clips Today</h1>
-      <p>Paste a YouTube link — AI finds the best moments, cuts them, and delivers TikTok-ready clips</p>
-      <div class="input-group">
-        <i class="ti ti-link" style="color:var(--TL);font-size:18px"></i>
-        <input type="text" id="url-input" placeholder="https://youtube.com/watch?v=..."/>
-      </div>
-      <div class="or-text">or upload a video</div>
-      <div class="pills">
-        <button class="pill active" onclick="selectPill(this)"><i class="ti ti-microphone"></i> Podcast</button>
-        <button class="pill" onclick="selectPill(this)"><i class="ti ti-device-gamepad"></i> Gaming</button>
-        <button class="pill" onclick="selectPill(this)"><i class="ti ti-video"></i> Vlog</button>
-        <button class="pill" onclick="selectPill(this)"><i class="ti ti-adjustments-horizontal"></i> Auto</button>
-      </div>
-      <div class="selects">
-        <select id="lang-select" onchange="setLang(this.value)"><option value="en">English</option><option value="id">Indonesian</option></select>
-        <select id="count-select" onchange="updateClipCount()"><option value="10">10 clips</option><option value="5">5 clips</option><option value="15">15 clips</option><option value="20">20 clips</option></select>
-      </div>
-      <button class="btn-primary" id="btn-gen" onclick="generateClips()">🔥 Generate <span id="clip-count-display">10</span> Clips</button>
+<div id="page-home" class="page active">
+  <div class="hero">
+    <h1 id="t1">Generate 10 Viral Clips Today</h1>
+    <p id="t2">Paste a YouTube link — AI finds the best moments and delivers TikTok-ready clips</p>
+    <div class="input-row"><i class="ti ti-link" style="color:var(--TL);font-size:18px"></i><input type="text" id="url-input" placeholder="https://youtube.com/watch?v=..."/></div>
+    <div class="or-text" id="t3">or upload a video</div>
+    <div class="pills">
+      <button class="pill active" onclick="pick(this)"><i class="ti ti-microphone"></i> Podcast</button>
+      <button class="pill" onclick="pick(this)"><i class="ti ti-device-gamepad"></i> Gaming</button>
+      <button class="pill" onclick="pick(this)"><i class="ti ti-video"></i> Vlog</button>
     </div>
+    <div class="selects">
+      <select id="lang-sel" onchange="setLang(this.value)">
+        <option value="en">English</option>
+        <option value="id">Indonesian</option>
+      </select>
+      <select id="cnt-sel" onchange="updCnt()">
+        <option value="10">10 clips</option>
+        <option value="5">5 clips</option>
+        <option value="15">15 clips</option>
+        <option value="20">20 clips</option>
+      </select>
+    </div>
+    <button class="btn-p" id="gen-btn" onclick="gen()">🔥 Generate <span id="cnt-display">10</span> Clips</button>
+  </div>
+  <div id="prog-area" style="display:none">
+    <div class="pcard"><div class="pbar"><div class="pfill" id="pfill" style="width:0%"></div></div><div style="font-size:13px;color:var(--TM)" id="pstatus">Starting...</div></div>
+  </div>
+  <div id="res-area" style="display:none"><h3 style="font-size:18px;font-weight:700;margin-bottom:16px">Your Clips</h3><div class="grid" id="clips-grid"></div></div>
+</div>
 
-    <div id="progress-area" style="display:none">
-      <div class="progress-card">
-        <div class="progress-text" id="progress-text">Analyzing your video...</div>
-        <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-        <div style="font-size:13px;color:var(--TM);margin-top:8px" id="progress-status">Starting up</div>
-      </div>
-    </div>
+<div id="page-projects" class="page">
+  <h2 style="font-size:22px;font-weight:700;margin-bottom:16px"><i class="ti ti-folder" style="color:var(--P)"></i> My Projects</h2>
+  <div style="background:var(--W);border:1px solid var(--B);border-radius:14px;padding:60px 20px;text-align:center;color:var(--TM)"><div style="font-size:48px;margin-bottom:12px">📁</div><p>No projects yet. Generate your first clip!</p></div>
+</div>
 
-    <div id="results-area" style="display:none">
-      <h3 style="font-size:18px;font-weight:700;margin-bottom:4px" id="results-title">Your Clips</h3>
-      <p style="font-size:13px;color:var(--TM);margin-bottom:16px" id="results-sub">From <span id="video-title">your video</span></p>
-      <div class="clips-grid" id="clips-grid"></div>
-    </div>
+<div id="page-stats" class="page">
+  <h2 style="font-size:22px;font-weight:700;margin-bottom:16px"><i class="ti ti-chart-bar" style="color:var(--P)"></i> Statistics</h2>
+  <div class="stat-grid">
+    <div class="stat-box"><div class="stat-num" style="color:var(--P)">0</div><div style="font-size:13px;color:var(--TM)">Total Clips</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#F59E0B">0%</div><div style="font-size:13px;color:var(--TM)">Avg Score</div></div>
   </div>
 </div>
 
+<div id="page-learn" class="page">
+  <h2 style="font-size:22px;font-weight:700;margin-bottom:16px"><i class="ti ti-book" style="color:var(--P)"></i> Learning Center</h2>
+  <div class="learn-grid">
+    <div class="learn-card"><div style="font-size:28px;margin-bottom:8px">📖</div><div style="font-weight:600">Getting Started</div><div style="font-size:12px;color:var(--TM)">5 min read</div></div>
+    <div class="learn-card"><div style="font-size:28px;margin-bottom:8px">🎬</div><div style="font-weight:600">Video Tutorials</div><div style="font-size:12px;color:var(--TM)">8 min read</div></div>
+    <div class="learn-card"><div style="font-size:28px;margin-bottom:8px">💡</div><div style="font-weight:600">Tips & Tricks</div><div style="font-size:12px;color:var(--TM)">6 min read</div></div>
+    <div class="learn-card"><div style="font-size:28px;margin-bottom:8px">❓</div><div style="font-weight:600">FAQ</div><div style="font-size:12px;color:var(--TM)">3 min read</div></div>
+  </div>
+</div>
+
+<div id="page-pricing" class="page">
+  <h2 style="font-size:22px;font-weight:700;margin-bottom:4px;text-align:center">Simple Pricing</h2>
+  <p style="font-size:14px;color:var(--TM);text-align:center;margin-bottom:24px">Start free. Upgrade when ready.</p>
+  <div class="price-grid">
+    <div class="price-card"><div class="price-name">Free</div><div class="price-amt">$0</div><div class="price-feat">1 clip/day · 720p</div><button class="price-btn">Get Started</button></div>
+    <div class="price-card pop"><div class="price-sub">⭐ POPULAR</div><div class="price-name">Starter</div><div class="price-amt" style="color:var(--P)">Rp 29K<span style="font-size:12px;color:var(--TM);font-weight:400">/mo</span></div><div class="price-feat">50 clips/mo · 1080p</div><button class="price-btn primary">Subscribe</button></div>
+    <div class="price-card"><div class="price-name">Pro</div><div class="price-amt">Rp 79K<span style="font-size:12px;color:var(--TM);font-weight:400">/mo</span></div><div class="price-feat">200 clips/mo · API</div><button class="price-btn">Subscribe</button></div>
+  </div>
+</div>
+
+<div id="page-settings" class="page">
+  <h2 style="font-size:22px;font-weight:700;margin-bottom:16px"><i class="ti ti-settings" style="color:var(--P)"></i> Settings</h2>
+  <div class="section"><div class="section-h"><span>👤 Account</span><span style="color:var(--P);font-size:13px;cursor:pointer">Edit</span></div><div class="section-b"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--TM)">Email</span><span>thomas@example.com</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--TM)">Name</span><span>Thomas</span></div></div></div>
+  <div class="section"><div class="section-h"><span>💳 Billing</span><span style="color:var(--P);font-size:13px;cursor:pointer">Manage</span></div><div class="section-b">Plan: Free</div></div>
+</div>
+
+</div><!-- main -->
+
+<!-- MOBILE NAV -->
 <div class="mobile-nav">
   <div class="mobile-nav-inner">
-    <button class="m-nav-item active" onclick="navigate('home')"><i class="ti ti-home"></i>Home</button>
-    <button class="m-nav-item" onclick="navigate('projects')"><i class="ti ti-folder"></i>Projects</button>
-    <button class="m-nav-item" style="position:relative"><div class="m-nav-plus"><i class="ti ti-plus" style="font-size:20px"></i></div></button>
-    <button class="m-nav-item" onclick="navigate('stats')"><i class="ti ti-chart-bar"></i>Stats</button>
-    <button class="m-nav-item"><i class="ti ti-user"></i>Account</button>
+    <button class="m-item active" onclick="go('home')"><i class="ti ti-home"></i>Home</button>
+    <button class="m-item" onclick="go('projects')"><i class="ti ti-folder"></i>Projects</button>
+    <button class="m-item" style="position:relative"><div class="m-plus"><i class="ti ti-plus" style="font-size:20px"></i></div></button>
+    <button class="m-item" onclick="go('stats')"><i class="ti ti-chart-bar"></i>Stats</button>
+    <button class="m-item" onclick="go('account')"><i class="ti ti-user"></i>Account</button>
   </div>
 </div>
 
 <script>
-var COLORS = ['#00AA13','#F59E0B','#10B981','#3B82F6','#8B5CF6','#EF4444','#00AA13','#F59E0B','#EC4899','#10B981'];
-var MOCK = [
-  {s:92,d:'0:32',t:'Epic Moment #1'},{s:78,d:'0:45',t:'Key Insight #2'},{s:85,d:'0:28',t:'Hook Opener #3'},
-  {s:67,d:'0:55',t:'Reaction #4'},{s:91,d:'0:38',t:'Viral Quote #5'},{s:74,d:'0:42',t:'Highlight #6'},
-  {s:88,d:'0:29',t:'Story Arc #7'},{s:63,d:'0:50',t:'Moment #8'},{s:95,d:'0:24',t:'Power Clip #9'},
-  {s:81,d:'0:36',t:'CTA Clip #10'}
-];
+var t = {
+  en: {
+    t1: "Generate 10 Viral Clips Today",
+    t2: "Paste a YouTube link \u2014 AI finds the best moments and delivers TikTok-ready clips",
+    t3: "or upload a video",
+    place: "https://youtube.com/watch?v=...",
+    proj: "My Projects",
+    stats: "Statistics",
+    learn: "Learning Center",
+    price: "Simple Pricing",
+    setup: "Settings"
+  },
+  id: {
+    t1: "Hasilkan 10 Klip Viral Hari Ini",
+    t2: "Tempel link YouTube \u2014 AI temukan momen terbaik dan siapkan klip TikTok",
+    t3: "atau unggah video",
+    place: "https://youtube.com/watch?v=...",
+    proj: "Proyek Saya",
+    stats: "Statistik",
+    learn: "Pusat Belajar",
+    price: "Harga Sederhana",
+    setup: "Pengaturan"
+  }
+};
+var lang = "en";
 
-function selectPill(el) {
-  document.querySelectorAll('.pill').forEach(function(p){p.classList.remove('active')});
-  el.classList.add('active');
+function pick(el) {
+  document.querySelectorAll(".pill").forEach(function(p){p.classList.remove("active")});
+  el.classList.add("active");
 }
 
+function updCnt() {
+  var c = document.getElementById("cnt-sel").value;
+  document.getElementById("cnt-display").textContent = c;
+  document.getElementById("gen-btn").innerHTML = (lang==="id" ? "🔥 Buat " : "🔥 Generate ") + c + (lang==="id" ? " Klip" : " Clips");
+}
 
-function navigate(page) {
+function go(page) {
+  document.querySelectorAll(".page").forEach(function(p){p.classList.remove("active")});
+  document.getElementById("page-"+page).classList.add("active");
   document.querySelectorAll(".side-item").forEach(function(i){i.classList.remove("active")});
   document.querySelectorAll(".side-item").forEach(function(i){
     if(i.textContent.trim().toLowerCase().includes(page)) i.classList.add("active");
   });
-  document.getElementById("page-title").textContent = page.charAt(0).toUpperCase() + page.slice(1);
-
-  // Hide all pages
-  document.querySelectorAll(".page").forEach(function(p){p.style.display = "none"});
-  document.getElementById("page-" + page).style.display = "block";
+  document.getElementById("ptitle").textContent = page.charAt(0).toUpperCase() + page.slice(1);
 }
 
+function setLang(l) {
+  lang = l;
+  document.getElementById("llabel").textContent = l.toUpperCase();
+  document.getElementById("lang-sel").value = l;
+  var tr = t[l];
+  if(!tr) return;
+  document.getElementById("t1").textContent = tr.t1;
+  document.getElementById("t2").textContent = tr.t2;
+  document.getElementById("t3").textContent = tr.t3;
+  document.getElementById("url-input").placeholder = tr.place;
+  updCnt();
+}
 
-function generateClips() {
-  document.getElementById("clip-count-display").textContent = document.getElementById("count-select").value;
+function togLang() {
+  setLang(lang === "en" ? "id" : "en");
+}
 
-  var url = document.getElementById('url-input').value.trim();
-  if (!url || (!url.includes('youtube.com') && !url.includes('youtu.be'))) {
-    document.getElementById('url-input').parentElement.style.borderColor = '#EF4444';
-    setTimeout(function(){document.getElementById('url-input').parentElement.style.borderColor=''},2000);
+function gen() {
+  var url = document.getElementById("url-input").value.trim();
+  if(!url||(!url.includes("youtube")&&!url.includes("youtu.be"))) {
+    document.getElementById("gen-btn").style.background = "#EF4444";
+    setTimeout(function(){document.getElementById("gen-btn").style.background = ""},1000);
     return;
   }
-
-  var btn = document.getElementById('btn-gen');
-  btn.disabled = true;
-  btn.innerHTML = '⏳ Processing...';
-
-  document.getElementById('results-area').style.display = 'none';
-  document.getElementById('progress-area').style.display = 'block';
-  progressAnimate();
-
-  // Try real API
-  fetch('/api/analyze', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({url: url})
-  })
-  .then(function(r){return r.json()})
-  .then(function(data){
-    if(data.error) throw new Error(data.error);
-    pollJob(data.jobId);
-  })
-  .catch(function(){mockComplete()});
-}
-
-function progressAnimate() {
-  var p = 0;
-  var statuses = ['Connecting to YouTube...', 'Downloading video...', 'Extracting audio...', 'Detecting viral moments...', 'Cutting clips...', 'Rendering captions...', 'Finalizing...'];
-  var si = 0;
+  document.getElementById("gen-btn").disabled = true;
+  document.getElementById("gen-btn").innerHTML = (lang==="id" ? "⏳ Memproses..." : "⏳ Processing...");
+  document.getElementById("res-area").style.display = "none";
+  document.getElementById("prog-area").style.display = "block";
+  var p=0, si=0, sts=[lang==="id"?"Menghubungkan...":"Connecting...",lang==="id"?"Mengunduh...":"Downloading...",lang==="id"?"Mendeteksi...":"Detecting...",lang==="id"?"Memotong...":"Cutting...",lang==="id"?"Selesai!":"Complete!"];
   var iv = setInterval(function(){
-    if(document.getElementById('progress-area').style.display === 'none'){clearInterval(iv);return}
     if(p>=95){clearInterval(iv);return}
-    p += Math.random() * 8 + 2;
-    if(p>95)p=95;
-    document.getElementById('progress-fill').style.width = p+'%';
-    document.getElementById('progress-status').textContent = statuses[si] || 'Processing...';
-    if(si < statuses.length-1) si++;
-  },800);
+    p+=Math.random()*8+2;if(p>95)p=95;
+    document.getElementById("pfill").style.width = p+"%";
+    document.getElementById("pstatus").textContent = sts[si]||sts[0];
+    if(si<sts.length-1) si++;
+  },700);
+  fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:url})})
+  .then(function(r){return r.json()})
+  .then(function(d){if(!d.error)pollJob(d.jobId);else finish()})
+  .catch(function(){finish()});
+  setTimeout(function(){finish()},30000);
 }
 
-function pollJob(jobId) {
-  var iv = setInterval(function(){
-    fetch('/api/job/'+jobId)
-    .then(function(r){return r.json()})
-    .then(function(job){
-      if(job.status==='completed'){clearInterval(iv);showResults(job);return}
-      if(job.status==='failed'){clearInterval(iv);mockComplete();return}
-    })
-    .catch(function(){})
+function pollJob(id) {
+  var iv=setInterval(function(){
+    fetch("/api/job/"+id).then(function(r){return r.json()}).then(function(j){
+      if(j.status==="completed"){clearInterval(iv);showClips(j);return}
+      if(j.status==="failed"){clearInterval(iv);finish();return}
+    }).catch(function(){});
   },3000);
-  setTimeout(function(){clearInterval(iv);mockComplete()},60000);
 }
 
-function showResults(job) {
-  document.getElementById('progress-fill').style.width='100%';
-  document.getElementById('progress-status').textContent='Complete!';
+function finish() {
+  document.getElementById("pfill").style.width="100%";
+  document.getElementById("pstatus").textContent = lang==="id"?"Selesai!":"Complete!";
   setTimeout(function(){
-    document.getElementById('progress-area').style.display='none';
-    var clips = (job.clips||[]).map(function(c,i){return{s:c.engagementScore||80,d:c.duration||'0:30',t:c.title||'Clip '+(i+1)}});
+    document.getElementById("prog-area").style.display="none";
+    showMock();
+  },500);
+}
+
+function showClips(job) {
+  document.getElementById("pfill").style.width="100%";
+  document.getElementById("pstatus").textContent="Complete!";
+  setTimeout(function(){
+    document.getElementById("prog-area").style.display="none";
+    var clips = (job.clips||[]).map(function(c,i){return{s:c.engagementScore||80,d:c.duration||"0:30",t:c.title||"Clip "+(i+1)}});
     renderClips(clips.length?clips:MOCK);
   },500);
 }
 
-function mockComplete() {
-  document.getElementById('progress-fill').style.width='100%';
-  document.getElementById('progress-status').textContent='Complete!';
-  setTimeout(function(){
-    document.getElementById('progress-area').style.display='none';
-    renderClips(MOCK);
-  },500);
+function showMock() {
+  document.getElementById("prog-area").style.display="none";
+  renderClips(MOCK);
 }
+
+var MOCK = [
+  {s:92,d:"0:32",t:"Epic Moment #1"},{s:78,d:"0:45",t:"Key Insight #2"},{s:85,d:"0:28",t:"Hook Opener #3"},
+  {s:67,d:"0:55",t:"Reaction #4"},{s:91,d:"0:38",t:"Viral Quote #5"},{s:74,d:"0:42",t:"Highlight #6"},
+  {s:88,d:"0:29",t:"Story Arc #7"},{s:63,d:"0:50",t:"Moment #8"},{s:95,d:"0:24",t:"Power Clip #9"},
+  {s:81,d:"0:36",t:"CTA Clip #10"}
+];
+var COLS = ["#00AA13","#F59E0B","#10B981","#3B82F6","#8B5CF6","#EF4444","#00AA13","#F59E0B","#EC4899","#10B981"];
 
 function renderClips(clips) {
-  var grid = document.getElementById('clips-grid');
-  grid.innerHTML = '';
-  document.getElementById('results-area').style.display = 'block';
-
+  var g = document.getElementById("clips-grid"); g.innerHTML = "";
+  document.getElementById("res-area").style.display = "block";
+  document.getElementById("gen-btn").disabled = false;
+  document.getElementById("gen-btn").innerHTML = (lang==="id" ? "🔥 Buat " : "🔥 Generate ") + document.getElementById("cnt-sel").value + (lang==="id" ? " Klip" : " Clips");
   clips.forEach(function(c,i){
-    var color = COLORS[i%COLORS.length];
-    grid.innerHTML += '<div class="clip-card">' +
-      '<div class="clip-thumb" style="background:linear-gradient(135deg,'+color+'22,'+color+'55)">' +
-        '<div class="clip-icon-w" style="background:linear-gradient(145deg,'+color+','+color+'cc)"><i class="ti ti-video" style="color:#fff;font-size:20px"></i></div>' +
-        '<div class="clip-dur">'+c.d+'</div>' +
-        '<div class="clip-score" style="background:'+color+'22;color:'+color+';border:1px solid '+color+'44">'+c.s+'%</div>' +
-      '</div>' +
-      '<div class="clip-info">' +
-        '<div class="clip-title">'+c.t+'</div>' +
-        '<button class="btn-dl" onclick="alert(\'Download: '+c.t+'\')"><i class="ti ti-download" style="font-size:12px"></i> Download</button>' +
-      '</div></div>';
+    var col = COLS[i%COLS.length];
+    g.innerHTML += '<div class="card"><div class="thumb" style="background:linear-gradient(135deg,'+col+'22,'+col+'55)">' +
+      '<div class="cicon" style="background:linear-gradient(145deg,'+col+','+col+'cc)"><i class="ti ti-video" style="color:#fff;font-size:20px"></i></div>' +
+      '<div class="cdur">'+c.d+'</div><div class="cscore" style="background:'+col+'22;color:'+col+';border:1px solid '+col+'44">'+c.s+'%</div></div>' +
+      '<div class="cinfo"><div class="ctitle">'+c.t+'</div>' +
+      '<button class="btn-d" onclick="dl(\''+c.t+'\')"><i class="ti ti-download" style="font-size:12px"></i> Download</button></div></div>';
   });
-
-  document.getElementById('btn-gen').disabled = false;
-  document.getElementById('btn-gen').innerHTML = '🔥 Generate <span id="clip-count-display">10</span> Clips';
 }
 
-function downloadClip(name) {
-  var text = "KlikClip - " + name + "\n\nDownload your clip from the API when ready.\n\nThis is a placeholder.";
-  var blob = new Blob([text], {type: "text/plain"});
-  var a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "klikclip-" + name.replace(/[^a-zA-Z0-9]/g,"-") + ".txt";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+function dl(name) {
+  var blob = new Blob(["KlikClip - "+name+"\n\nDownload placeholder. Real clips coming soon."],{type:"text/plain"});
+  var a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = "klikclip-"+name.replace(/[^a-zA-Z0-9]/g,"-")+".txt";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
 }
 
-
-var currentLang = "en";
-var translations = {
-  "en": {
-    "hero_title": "Generate 10 Viral Clips Today",
-    "hero_sub": "Paste a YouTube link — AI finds the best moments, cuts them, and delivers TikTok-ready clips",
-    "input_placeholder": "https://youtube.com/watch?v=...",
-    "or_text": "or upload a video",
-    "btn_gen": "🔥 Generate <span id="clip-count-display">10</span> Clips",
-    "processing": "Processing...",
-    "credits": "Credits"
-  },
-  "id": {
-    "hero_title": "Hasilkan 10 Klip Viral Hari Ini",
-    "hero_sub": "Tempel link YouTube — AI temukan momen terbaik, potong, dan siapkan klip TikTok",
-    "input_placeholder": "https://youtube.com/watch?v=...",
-    "or_text": "atau unggah video",
-    "btn_gen": "🔥 Buat {count} Klip",
-    "processing": "Memproses...",
-    "credits": "Kredit"
-  }
-};
-
-
-function updateClipCount() {
-  var count = document.getElementById("count-select").value;
-  document.getElementById("clip-count-display").textContent = count;
-}
-function setLang(l) {
-  currentLang = l;
-  document.getElementById("lang-label").textContent = l.toUpperCase();
-  document.getElementById("lang-select").value = l;
-  applyLang();
-}
-function applyLang() {
-  var t = translations[currentLang];
-  if (!t) return;
-  document.querySelector(".hero-box h1").textContent = t.hero_title;
-  document.querySelector(".hero-box p").textContent = t.hero_sub;
-  document.getElementById("url-input").placeholder = t.input_placeholder;
-  document.querySelector(".or-text").textContent = t.or_text;
-  var count = document.getElementById("count-select").value;
-  document.getElementById("btn-gen").innerHTML = "🔥 " + (currentLang === "id" ? "Buat " : "Generate ") + count + " " + (currentLang === "id" ? "Klip" : "Clips");
-}
-
-function toggleLang() {
-  currentLang = currentLang === "en" ? "id" : "en";
-  document.getElementById("lang-label").textContent = currentLang.toUpperCase();
-  var t = translations[currentLang];
-  if (!t) return;
-  var title = document.querySelector(".hero-box h1");
-  var sub = document.querySelector(".hero-box p");
-  var input = document.getElementById("url-input");
-  var orText = document.querySelector(".or-text");
-  var genBtn = document.getElementById("btn-gen");
-  if (title) title.textContent = t.hero_title;
-  if (sub) sub.textContent = t.hero_sub;
-  if (input) input.placeholder = t.input_placeholder;
-  if (orText) orText.textContent = t.or_text;
-  if (genBtn) genBtn.innerHTML = "🔥 " + (currentLang === "id" ? "Buat " : "Generate ") + document.getElementById("count-select").value + " " + (currentLang === "id" ? "Klip" : "Clips");
-}
-
+go("home");
 </script>
 </body>
 </html>
