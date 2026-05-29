@@ -13,6 +13,7 @@ const { requireAuth, optionalAuth, register, login, checkAndDecrementQuota, addC
 const { createSnapToken, verifyWebhookSignature, isPaymentSuccess, CREDIT_PACKAGES, getPackage } = require('./lib/Midtrans');
 const { getVideoInfo, downloadVideo, processClip, cleanupTmp, getClipPath, clipExists } = require('./lib/Clipper');
 const { detectHighlights, fallbackHighlights } = require('./lib/AIHighlight');
+const db = require('./lib/db');
 const multer = require('multer');
 const app = express();
 const PORT = process.env.PORT || 3030;
@@ -27,6 +28,28 @@ const upload = multer({ dest: UPLOAD_DIR, limits: { fileSize: 500 * 1024 * 1024 
 
 // ─── In-memory job store (lost on restart, fine for MVP) ────────────────────
 const jobs = new Map();
+let dbReady = false;
+
+// ─── Database init ────────────────────────────────────────────────────────────
+(async () => {
+  dbReady = await db.initDb();
+  if (dbReady) console.log('[DB] PostgreSQL connected');
+  // Reload jobs from DB into memory
+  try {
+    const p = new (require('pg').Pool)({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+      max: 2,
+    });
+    const r = await p.query('SELECT id FROM kc_jobs WHERE status NOT IN ($1,$2)', ['done', 'error']);
+    for (const row of r.rows) {
+      const job = await db.dbGetJob(row.id);
+      if (job) jobs.set(job.id, job);
+    }
+    await p.end();
+    console.log(`[DB] Restored ${r.rows.length} active jobs`);
+  } catch {}
+})();
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
 app.use(cors({ origin: '*', credentials: true }));
@@ -59,8 +82,13 @@ app.post('/api/auth/login', wrap(async (req, res) => {
 }));
 
 app.get('/api/auth/me', requireAuth, wrap(async (req, res) => {
-  const users = loadUsers();
-  const user = Object.values(users).find(u => u.id === req.user.id);
+  let user;
+  if (dbReady) {
+    user = await db.dbFindUserById(req.user.id);
+  } else {
+    const users = loadUsers();
+    user = Object.values(users).find(u => u.id === req.user.id);
+  }
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const limit = user.plan === 'free' ? PLAN_LIMITS.free : PLAN_LIMITS[user.plan] || 999;
@@ -96,24 +124,33 @@ app.post('/api/auth/google', wrap(async (req, res) => {
   const googleEmail = payload.email;
   if (!googleEmail) return res.status(401).json({ error: 'Email required from Google' });
 
-  // Find or create user
-  const users = loadUsers();
-  let user = users[googleEmail.toLowerCase()];
-  if (!user) {
-    // Create new user from Google data
-    user = {
-      id: uuidv4(),
-      email: googleEmail.toLowerCase(),
-      password: '',  // Google users don't have password
-      name: payload.name || payload.email.split('@')[0],
-      plan: 'free',
-      clips_used: 0,
-      total_processed: 0,
-      google_id: payload.sub,
-      created_at: new Date().toISOString(),
-    };
-    users[googleEmail.toLowerCase()] = user;
-    saveUsers(users);
+  // Find or create user (DB first, then JSON fallback)
+  let user;
+  if (dbReady) {
+    user = await db.dbFindUserByEmail(googleEmail);
+    if (!user) {
+      const newUser = {
+        id: uuidv4(), email: googleEmail.toLowerCase(), password: '',
+        name: payload.name || payload.email.split('@')[0],
+        plan: 'free', clips_used: 0, total_processed: 0,
+        google_id: payload.sub, created_at: new Date().toISOString(),
+      };
+      await db.dbCreateUser(newUser);
+      user = newUser;
+    }
+  } else {
+    const users = loadUsers();
+    user = users[googleEmail.toLowerCase()];
+    if (!user) {
+      user = {
+        id: uuidv4(), email: googleEmail.toLowerCase(), password: '',
+        name: payload.name || payload.email.split('@')[0],
+        plan: 'free', clips_used: 0, total_processed: 0,
+        google_id: payload.sub, created_at: new Date().toISOString(),
+      };
+      users[googleEmail.toLowerCase()] = user;
+      saveUsers(users);
+    }
   }
 
   const token = generateToken(user);
@@ -138,6 +175,7 @@ app.post('/api/analyze', optionalAuth, upload.single('video'), wrap(async (req, 
     created_at: new Date().toISOString(),
   };
   jobs.set(jobId, job);
+  if (dbReady) { db.dbSaveJob(job).catch(() => {}); }
 
   // Return immediately, process async
   res.json({ jobId, status: 'analyzing' });
@@ -188,6 +226,7 @@ async function processAsync(job) {
       status: 'pending',
     }));
     job.status = 'done';
+    if (dbReady) { db.dbSaveJob(job).catch(() => {}); }
   } catch (err) {
     console.error('[VS] Analyze error:', err.message);
     job.status = 'error';
@@ -196,11 +235,14 @@ async function processAsync(job) {
 }
 
 // ─── JOB STATUS ──────────────────────────────────────────────────────────────
-app.get('/api/job/:jobId', (req, res) => {
-  const job = jobs.get(req.params.jobId);
+app.get('/api/job/:jobId', wrap(async (req, res) => {
+  let job = jobs.get(req.params.jobId);
+  if (!job && dbReady) {
+    job = await db.dbGetJob(req.params.jobId);
+  }
   if (!job) return res.status(404).json({ error: 'Job not found' });
   res.json(job);
-});
+}));
 
 // ─── PROCESS CLIP (requires auth, decrements quota) ─────────────────────────
 app.post('/api/clip', requireAuth, wrap(async (req, res) => {
@@ -238,10 +280,16 @@ app.post('/api/clip', requireAuth, wrap(async (req, res) => {
       clip.file_size = result.size;
       clip.download_url = `${BASE_URL}/clips/${clipId}.mp4`;
 
+      if (dbReady) { db.dbUpdateClipStatus(clipId, 'done', { file_path: result.path, file_size: result.size, download_url: `${BASE_URL}/clips/${clipId}.mp4` }).catch(() => {}); }
+
       // Update user total
-      const users = loadUsers();
-      const user = Object.values(users).find(u => u.id === req.user.id);
-      if (user) { user.total_processed = (user.total_processed || 0) + 1; saveUsers(users); }
+      if (dbReady) {
+        await db.dbUpdateUserQuota(req.user.id, 0); // +1 to total_processed only (quota already decremented)
+      } else {
+        const users = loadUsers();
+        const user = Object.values(users).find(u => u.id === req.user.id);
+        if (user) { user.total_processed = (user.total_processed || 0) + 1; saveUsers(users); }
+      }
     } catch (err) {
       console.error('[VS] Clip error:', err.message);
       clip.status = 'error';
@@ -255,13 +303,19 @@ app.post('/api/clip', requireAuth, wrap(async (req, res) => {
 }));
 
 // ─── CLIP STATUS ─────────────────────────────────────────────────────────────
-app.get('/api/clip/:clipId', (req, res) => {
+app.get('/api/clip/:clipId', wrap(async (req, res) => {
+  // Check in-memory jobs first
   for (const job of jobs.values()) {
     const clip = job.clips.find(c => c.id === req.params.clipId);
     if (clip) return res.json(clip);
   }
+  // Fallback to DB
+  if (dbReady) {
+    const clip = await db.dbGetClip(req.params.clipId);
+    if (clip) return res.json(clip);
+  }
   res.status(404).json({ error: 'Clip not found' });
-});
+}));
 
 // ─── DOWNLOAD ────────────────────────────────────────────────────────────────
 app.get('/api/download/:clipId', requireAuth, (req, res) => {
@@ -276,8 +330,13 @@ app.post('/api/payment/create', requireAuth, wrap(async (req, res) => {
   const pkg = getPackage(packageId);
   if (!pkg) return res.status(400).json({ error: 'Invalid package' });
 
-  const users = loadUsers();
-  const user = Object.values(users).find(u => u.id === req.user.id);
+  let user;
+  if (dbReady) {
+    user = await db.dbFindUserById(req.user.id);
+  } else {
+    const users = loadUsers();
+    user = Object.values(users).find(u => u.id === req.user.id);
+  }
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const orderId = `VS-${user.id.slice(-8).toUpperCase()}-${Date.now()}`;
@@ -319,11 +378,19 @@ app.post('/api/payment/webhook', wrap(async (req, res) => {
 
 // ─── Transactions store ───────────────────────────────────────────────────
 function loadTransactions() {
+  // This is kept for backward compat — new code uses DB
   try { const p = path.join(__dirname, 'transactions.json'); if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf8')); } catch {}
   return {};
 }
 function saveTransactions(t) {
   try { fs.writeFileSync(path.join(__dirname, 'transactions.json'), JSON.stringify(t, null, 2)); } catch {}
+}
+
+// Also save to DB if available
+async function persistTransaction(tx) {
+  if (dbReady) {
+    try { await db.dbCreateTransaction(tx); } catch {}
+  }
 }
 
 // ─── HEALTH ──────────────────────────────────────────────────────────────────
@@ -333,9 +400,12 @@ app.get('/api/packages', (req, res) => res.json({ packages: CREDIT_PACKAGES }));
 
 // ─── MY JOBS HISTORY ─────────────────────────────────────────────────────────
 app.get('/api/jobs', requireAuth, wrap(async (req, res) => {
-  const userJobs = [];
+  let userJobs = [];
   for (const job of jobs.values()) {
     if (job.user_id === req.user.id) userJobs.push(job);
+  }
+  if (userJobs.length === 0 && dbReady) {
+    userJobs = await db.dbGetUserJobs(req.user.id);
   }
   res.json(userJobs.slice(0, 20));
 }));
