@@ -527,7 +527,7 @@ function renderClips(clips) {
   clips.forEach(function(c, i) {
     var col = COLS[i % COLS.length];
     var dur = formatDuration(c.duration || (c.end_sec - c.start_sec) || 30);
-    var score = c.total_score || c.hook_score || 0;
+    var score = c.score || 0;
     var title = c.hook_text || c.title || 'Clip ' + (i + 1);
     var hook = c.caption || c.reason || '';
     var status = c.status || 'pending';
