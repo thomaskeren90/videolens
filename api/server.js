@@ -318,10 +318,21 @@ app.get('/api/clip/:clipId', wrap(async (req, res) => {
 }));
 
 // ─── DOWNLOAD ────────────────────────────────────────────────────────────────
-app.get('/api/download/:clipId', requireAuth, (req, res) => {
+app.get('/api/download/:clipId', (req, res) => {
+  // Support both header auth and query param auth
+  const header = req.headers['authorization'] || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : req.query.token;
+  if (!token) return res.status(401).json({ error: 'Token required' });
+  try {
+    const jwt = require('jsonwebtoken');
+    const secret = process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
+    jwt.verify(token, secret);
+  } catch {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
   const filePath = getClipPath(req.params.clipId);
   if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Clip not found' });
-  res.download(filePath);
+  res.download(filePath, 'klikclip-' + req.params.clipId + '.mp4');
 });
 
 // ─── PAYMENT ─────────────────────────────────────────────────────────────────

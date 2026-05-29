@@ -618,31 +618,12 @@ function pollClipStatus(clipId, btn) {
 
 function downloadClip(clipId) {
   if (!token) { showAuth(); return; }
-  var btn = document.getElementById('dlbtn-' + clipId);
-  if (btn) { btn.textContent = 'Starting download...'; btn.disabled = true; }
-  // Use window.open with token header trick — more reliable than blob
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/download/' + clipId, true);
-  xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-  xhr.responseType = 'blob';
-  xhr.onload = function() {
-    if (xhr.status === 200) {
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(xhr.response);
-      a.download = 'klikclip-' + clipId + '.mp4';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(function() { URL.revokeObjectURL(a.href); }, 10000);
-      if (btn) { btn.textContent = 'Download'; btn.disabled = false; }
-    } else {
-      msg('Download failed: clip not ready (error ' + xhr.status + ')', 'err');
-      if (btn) { btn.textContent = 'Download'; btn.disabled = false; }
-    }
-  };
-  xhr.onerror = function() {
-    msg('Download failed - network error', 'err');
-    if (btn) { btn.textContent = 'Download'; btn.disabled = false; }
-  };
-  xhr.send();
+  // Use a direct link approach with token in query param
+  var a = document.createElement('a');
+  a.href = '/api/download/' + clipId + '?token=' + encodeURIComponent(token);
+  a.download = 'klikclip-' + clipId + '.mp4';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function() { msg('Download started! Check your downloads folder.', 'ok'); }, 500);
 }
 
 // ─── PAYMENT ─────────────────────────────────────────────────────────────────
