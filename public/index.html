@@ -123,7 +123,8 @@ body{background:var(--BG);color:var(--T);min-height:100vh;display:flex}
     </div>
   </div>
 
-  <div class="content" id="content-area">
+  <div id="page-home" class="page" style="display:block">
+  <div class="content">
     <div class="hero-box">
       <h1>Generate 10 Viral Clips Today</h1>
       <p>Paste a YouTube link — AI finds the best moments, cuts them, and delivers TikTok-ready clips</p>
@@ -161,13 +162,12 @@ body{background:var(--BG);color:var(--T);min-height:100vh;display:flex}
   </div>
 </div>
 
-<!-- MOBILE NAV -->
 <div class="mobile-nav">
   <div class="mobile-nav-inner">
-    <button class="m-nav-item active"><i class="ti ti-home"></i>Home</button>
-    <button class="m-nav-item"><i class="ti ti-folder"></i>Projects</button>
+    <button class="m-nav-item active" onclick="navigate('home')"><i class="ti ti-home"></i>Home</button>
+    <button class="m-nav-item" onclick="navigate('projects')"><i class="ti ti-folder"></i>Projects</button>
     <button class="m-nav-item" style="position:relative"><div class="m-nav-plus"><i class="ti ti-plus" style="font-size:20px"></i></div></button>
-    <button class="m-nav-item"><i class="ti ti-chart-bar"></i>Stats</button>
+    <button class="m-nav-item" onclick="navigate('stats')"><i class="ti ti-chart-bar"></i>Stats</button>
     <button class="m-nav-item"><i class="ti ti-user"></i>Account</button>
   </div>
 </div>
@@ -186,13 +186,19 @@ function selectPill(el) {
   el.classList.add('active');
 }
 
+
 function navigate(page) {
-  document.querySelectorAll('.side-item').forEach(function(i){i.classList.remove('active')});
-  document.querySelectorAll('.side-item').forEach(function(i){
-    if(i.textContent.trim().toLowerCase().includes(page)) i.classList.add('active');
+  document.querySelectorAll(".side-item").forEach(function(i){i.classList.remove("active")});
+  document.querySelectorAll(".side-item").forEach(function(i){
+    if(i.textContent.trim().toLowerCase().includes(page)) i.classList.add("active");
   });
-  document.getElementById('page-title').textContent = page.charAt(0).toUpperCase() + page.slice(1);
+  document.getElementById("page-title").textContent = page.charAt(0).toUpperCase() + page.slice(1);
+
+  // Hide all pages
+  document.querySelectorAll(".page").forEach(function(p){p.style.display = "none"});
+  document.getElementById("page-" + page).style.display = "block";
 }
+
 
 function generateClips() {
   var url = document.getElementById('url-input').value.trim();
