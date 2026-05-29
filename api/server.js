@@ -18,6 +18,7 @@ const app = express();
 const PORT = process.env.PORT || 3030;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 const CLIPS_DIR = process.env.CLIPS_DIR || path.join(__dirname, 'clips');
+const TMP_DIR = process.env.TMP_DIR || path.join(__dirname, 'tmp');
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 const upload = multer({ dest: UPLOAD_DIR, limits: { fileSize: 500 * 1024 * 1024 } });
 
