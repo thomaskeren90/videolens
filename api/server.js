@@ -68,6 +68,55 @@ app.get('/api/auth/me', requireAuth, wrap(async (req, res) => {
     clips_remaining: Math.max(0, limit - (user.clips_used || 0)),
     total_processed: user.total_processed || 0,
   });
+  });
+}));
+
+// ─── GOOGLE AUTH ────────────────────────────────────────────────────────────
+app.post('/api/auth/google', wrap(async (req, res) => {
+  const { credential } = req.body;
+  if (!credential) return res.status(400).json({ error: 'Credential required' });
+
+  // Verify with Google's tokeninfo endpoint (no SDK needed)
+  const axios = require('axios');
+  let payload;
+  try {
+    const verifyResp = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`, { timeout: 5000 });
+    payload = verifyResp.data;
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid Google credential' });
+  }
+
+  // Verify audience matches our client ID
+  const expectedAud = process.env.GOOGLE_CLIENT_ID;
+  if (expectedAud && payload.aud !== expectedAud) {
+    return res.status(401).json({ error: 'Invalid audience' });
+  }
+
+  const googleEmail = payload.email;
+  if (!googleEmail) return res.status(401).json({ error: 'Email required from Google' });
+
+  // Find or create user
+  const users = loadUsers();
+  let user = users[googleEmail.toLowerCase()];
+  if (!user) {
+    // Create new user from Google data
+    user = {
+      id: uuidv4(),
+      email: googleEmail.toLowerCase(),
+      password: '',  // Google users don't have password
+      name: payload.name || payload.email.split('@')[0],
+      plan: 'free',
+      clips_used: 0,
+      total_processed: 0,
+      google_id: payload.sub,
+      created_at: new Date().toISOString(),
+    };
+    users[googleEmail.toLowerCase()] = user;
+    saveUsers(users);
+  }
+
+  const token = generateToken(user);
+  res.json({ token, user: { id: user.id, email: user.email, name: user.name, plan: user.plan, clips_used: user.clips_used } });
 }));
 
 // ─── ANALYZE: extract highlights ─────────────────────────────────────────────
