@@ -44,6 +44,7 @@ body{background:var(--BG);color:var(--T);min-height:100vh;display:flex}
 .toggle-chip{height:32px;padding:0 12px;border-radius:100px;border:2px solid var(--B);background:var(--W);font-size:11px;font-weight:600;color:var(--TM);cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:.15s}
 .toggle-chip.active{border-color:var(--P);background:var(--PL);color:var(--P)}
 .toggle-chip:hover{border-color:#aaa}
+.lang-btn{height:30px;padding:0 10px;border-radius:100px;border:1.5px solid var(--B);background:var(--W);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px}
 .pcard{background:var(--BG);border-radius:14px;padding:20px;margin:20px 0;text-align:center}
 .pbar{height:10px;background:var(--B);border-radius:100px;overflow:hidden;margin:10px auto;max-width:400px}
 .pfill{height:100%;border-radius:100px;background:linear-gradient(90deg,#00C416,#00AA13);width:0%;transition:width .3s}
@@ -115,6 +116,7 @@ body{background:var(--BG);color:var(--T);min-height:100vh;display:flex}
   <div class="top-bar">
     <h2 id="ptitle">Home</h2>
     <div style="display:flex;gap:10px;align-items:center">
+      <button class="lang-btn" onclick="togLang()"><i class="ti ti-world" style="font-size:13px"></i> <span id="llabel">EN</span></button>
       <button class="btn-p" style="height:34px;padding:0 16px;font-size:12px;box-shadow:none" onclick="showAuth()" id="login-btn">Login</button>
       <div class="credit-badge"><i class="ti ti-bolt" style="font-size:12px"></i> <span id="badge-credits">0</span></div>
     </div>
@@ -281,6 +283,60 @@ async function onGoogleSignIn(response) {
 
 function togChip(el) {
   el.classList.toggle('active');
+}
+
+// ─── LANG ────────────────────────────────────────────────────────────────────
+var LANG = {
+  en: {
+    hero: 'Generate Viral Clips in Seconds',
+    heroSub: 'Paste a YouTube link — AI finds the best moments and delivers TikTok-ready clips',
+    or: 'or upload a video',
+    urlPlace: 'https://youtube.com/watch?v=...',
+    clickUpload: 'Click to select video or drag & drop',
+    enhance: 'Enhancements:',
+    genBtn: '🔥 Generate Clips',
+    login: 'Login',
+    logout: 'Logout',
+    notLogged: 'Not logged in',
+    freePlan: 'Free plan',
+    credits: 'Credits',
+    loggedIn: 'Logged in!',
+    accCreated: 'Account created!',
+    clickLogin: 'Click to Login',
+  },
+  id: {
+    hero: 'Hasilkan Klip Viral dalam Hitungan Detik',
+    heroSub: 'Tempel link YouTube — AI temukan momen terbaik dan siapkan klip TikTok',
+    or: 'atau unggah video',
+    urlPlace: 'https://youtube.com/watch?v=...',
+    clickUpload: 'Klik untuk pilih video atau seret & lepas',
+    enhance: 'Peningkatan:',
+    genBtn: '🔥 Buat Klip',
+    login: 'Masuk',
+    logout: 'Keluar',
+    notLogged: 'Belum masuk',
+    freePlan: 'Paket gratis',
+    credits: 'Kredit',
+    loggedIn: 'Berhasil masuk!',
+    accCreated: 'Akun berhasil dibuat!',
+    clickLogin: 'Klik untuk Masuk',
+  }
+};
+var lang = 'en';
+
+function setLang(l) {
+  lang = l;
+  document.getElementById('llabel').textContent = l.toUpperCase();
+  var t = LANG[l];
+  if (!t) return;
+  var el = document.getElementById('hero-title'); if (el) el.textContent = t.hero;
+  var el2 = document.getElementById('hero-sub'); if (el2) el2.textContent = t.heroSub;
+  var el3 = document.querySelector('#upload-zone span'); if (el3) el3.textContent = t.clickUpload;
+  var el4 = document.getElementById('url-input'); if (el4) el4.placeholder = t.urlPlace;
+}
+
+function togLang() {
+  setLang(lang === 'en' ? 'id' : 'en');
 }
 
 function logout() {
