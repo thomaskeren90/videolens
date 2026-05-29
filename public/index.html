@@ -123,6 +123,12 @@ body{background:var(--BG);color:var(--T);min-height:100vh;display:flex}
     <p id="t2">Paste a YouTube link — AI finds the best moments and delivers TikTok-ready clips</p>
     <div class="input-row"><i class="ti ti-link" style="color:var(--TL);font-size:18px"></i><input type="text" id="url-input" placeholder="https://youtube.com/watch?v=..."/></div>
     <div class="or-text" id="t3">or upload a video</div>
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" style="border:2px dashed var(--B);border-radius:12px;padding:20px;text-align:center;margin-bottom:14px;cursor:pointer;transition:.2s">
+      <i class="ti ti-upload" style="font-size:24px;color:var(--TL);margin-bottom:6px"></i>
+      <p style="font-size:13px;color:var(--TM)" id="upload-text">Click to upload video</p>
+      <small style="font-size:11px;color:var(--TL)">MP4, MOV, AVI · Max 1 GB</small>
+      <input type="file" id="file-input" accept="video/*" style="display:none"/>
+    </div>
     <div class="pills">
       <button class="pill active" onclick="pick(this)"><i class="ti ti-microphone"></i> Podcast</button>
       <button class="pill" onclick="pick(this)"><i class="ti ti-device-gamepad"></i> Gaming</button>
@@ -358,6 +364,16 @@ function dl(name) {
 }
 
 go("home");
+
+// Upload zone drag/drop
+(function(){
+  var uz = document.getElementById("upload-zone");
+  if(!uz) return;
+  uz.addEventListener("dragover",function(e){e.preventDefault();uz.style.borderColor="#00AA13";uz.style.background="#E6F7E8"});
+  uz.addEventListener("dragleave",function(){uz.style.borderColor="";uz.style.background=""});
+  uz.addEventListener("drop",function(e){e.preventDefault();uz.style.borderColor="";uz.style.background=""});
+})();
+
 </script>
 </body>
 </html>
