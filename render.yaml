@@ -7,7 +7,7 @@ services:
     env: node
     region: singapore
     plan: free
-    buildCommand: cd api && npm install
+    buildCommand: chmod +x build.sh && ./build.sh
     startCommand: node api/server.js
     envVars:
       - key: NODE_VERSION
