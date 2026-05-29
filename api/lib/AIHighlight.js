@@ -125,7 +125,7 @@ Return JSON array:
 // =====================================================================
 // MAIN EXPORT
 // =====================================================================
-async function detectHighlights(videoInfo) {
+async function detectHighlights(videoInfo, clipCount) {
   const { title, description, duration, transcript, chapters } = videoInfo;
   const durationSec = duration || 0;
   const transcriptText = buildTranscriptText(transcript);
@@ -151,7 +151,7 @@ async function detectHighlights(videoInfo) {
     const keyTopics = result?.key_topics || [];
 
     // Post-process: deduplicate, sort by score, space them out
-    const topMoments = deduplicateAndRank(allMoments, 10, 30);
+    const topMoments = deduplicateAndRank(allMoments, clipCount || 10, 30);
     if (topMoments.length === 0) throw new Error('No moments detected');
 
     // ---- STAGE 3: Write hooks + captions ----
@@ -202,7 +202,7 @@ async function detectHighlights(videoInfo) {
 
   } catch (err) {
     console.error('[AIHighlight] Pipeline failed, using fallback:', err.message);
-    return fallbackHighlights(durationSec);
+    return fallbackHighlights(durationSec, clipCount || 10);
   }
 }
 
