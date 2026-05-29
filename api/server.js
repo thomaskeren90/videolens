@@ -157,7 +157,7 @@ async function processAsync(job) {
 
     // 3. Create clip records
     job.highlights = highlights;
-    job.clips = highlights.map((h, i) => ({
+    job.clips = (highlights.clips || []).map((h, i) => ({
       id: uuidv4(), job_id: job.id, title: h.title,
       start_sec: h.start_sec, end_sec: h.end_sec,
       score: h.score, reason: h.reason, hook: h.hook,
